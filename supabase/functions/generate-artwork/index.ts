@@ -1,0 +1,100 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface OllamaResponse {
+  response: string;
+  done: boolean;
+  context?: number[];
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  try {
+    const { prompt, photoId, userId } = await req.json()
+
+    if (!prompt || !photoId || !userId) {
+      throw new Error('Prompt, photoId, and userId are required')
+    }
+
+    console.log('Generating artwork with prompt:', prompt)
+
+    // Call Ollama API running locally
+    const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tinyllama',
+        prompt: `Create an artistic description for generating artwork based on this prompt: ${prompt}. Focus on artistic style, colors, mood, and visual elements.`,
+        stream: false
+      }),
+    })
+
+    if (!ollamaResponse.ok) {
+      console.error('Ollama API error:', ollamaResponse.status, ollamaResponse.statusText)
+      throw new Error(`Ollama API error: ${ollamaResponse.status}`)
+    }
+
+    const ollamaData: OllamaResponse = await ollamaResponse.json()
+    const artisticDescription = ollamaData.response
+
+    console.log('Generated artistic description:', artisticDescription)
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Store the generated artwork description in the database
+    const { data: artwork, error } = await supabase
+      .from('generated_artworks')
+      .insert({
+        user_id: userId,
+        photo_id: photoId,
+        prompt: prompt,
+        generated_description: artisticDescription,
+        status: 'completed'
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Database error:', error)
+      throw new Error(`Database error: ${error.message}`)
+    }
+
+    console.log('Artwork saved to database:', artwork.id)
+
+    return new Response(
+      JSON.stringify({ 
+        artwork,
+        description: artisticDescription 
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  } catch (error) {
+    console.error('Error in generate-artwork function:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    return new Response(
+      JSON.stringify({ 
+        error: errorMessage,
+        details: 'Make sure Ollama is running locally with tinyllama model installed'
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+})

@@ -1,1 +1,4 @@
 project_id = "gdpevaegurnpnjgqrchn"
+
+[functions.generate-artwork]
+verify_jwt = false
