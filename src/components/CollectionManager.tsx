@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Plus, FolderOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Collection {
   id: string;
@@ -23,38 +23,49 @@ interface CollectionManagerProps {
   onSelectCollection: (id: string) => void;
 }
 
-export function CollectionManager({ selectedCollectionId, onSelectCollection }: CollectionManagerProps) {
+export function CollectionManager({ selectedCollectionId, onSelectCollection }: Readonly<CollectionManagerProps>) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newCollection, setNewCollection] = useState({ name: '', description: '' });
+  const [newCollection, setNewCollection] = useState({ name: "", description: "" });
   const [creating, setCreating] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1400);
   const { toast } = useToast();
-
   useEffect(() => {
     fetchCollections();
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => setIsLargeScreen(window.innerWidth >= 1400);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const fetchCollections = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('photo_collections')
-        .select(`
+        .from("photo_collections")
+        .select(
+          `
           *,
           travel_photos(count)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const collectionsWithCounts = data?.map(collection => ({
-        ...collection,
-        photo_count: collection.travel_photos?.[0]?.count || 0
-      })) || [];
+      const collectionsWithCounts =
+        data?.map((collection) => ({
+          ...collection,
+          photo_count: collection.travel_photos?.[0]?.count || 0,
+        })) || [];
 
       setCollections(collectionsWithCounts);
 
@@ -63,11 +74,11 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
         onSelectCollection(collectionsWithCounts[0].id);
       }
     } catch (error) {
-      console.error('Error fetching collections:', error);
+      console.error("Error fetching collections:", error);
       toast({
         title: "Failed to load collections",
         description: "Please try refreshing the page",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -79,14 +90,16 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
       toast({
         title: "Collection name required",
         description: "Please enter a name for your collection",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     setCreating(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       // if (!user) {
       //   toast({
       //     title: "Authentication required",
@@ -97,11 +110,11 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
       // }
 
       const { data, error } = await supabase
-        .from('photo_collections')
+        .from("photo_collections")
         .insert({
           user_id: user.id,
           name: newCollection.name.trim(),
-          description: newCollection.description.trim() || null
+          description: newCollection.description.trim() || null,
         })
         .select()
         .single();
@@ -110,10 +123,10 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
 
       toast({
         title: "Collection created",
-        description: `"${newCollection.name}" has been created successfully`
+        description: `"${newCollection.name}" has been created successfully`,
       });
 
-      setNewCollection({ name: '', description: '' });
+      setNewCollection({ name: "", description: "" });
       setCreateDialogOpen(false);
       fetchCollections();
 
@@ -122,11 +135,11 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
         onSelectCollection(data.id);
       }
     } catch (error) {
-      console.error('Error creating collection:', error);
+      console.error("Error creating collection:", error);
       toast({
         title: "Failed to create collection",
         description: "Please try again later",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setCreating(false);
@@ -154,9 +167,9 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
         <h2 className="text-xl font-bold">Photo Collections</h2>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-              <Plus className="mr-2 h-4 w-4" />
-              New Collection
+            <Button size={isLargeScreen ? "sm" : "icon"} className={`bg-gradient-primary hover:opacity-90 items-center${isLargeScreen ? "" : " justify-center"}`} aria-label="New Collection">
+              <Plus className={isLargeScreen ? "mr-2 h-4 w-4" : "h-5 w-5"} />
+              {isLargeScreen && "New Collection"}
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -166,31 +179,14 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Collection Name</Label>
-                <Input
-                  id="name"
-                  placeholder="My Travel Photos"
-                  value={newCollection.name}
-                  onChange={(e) => setNewCollection(prev => ({ ...prev, name: e.target.value }))}
-                  className="mt-1"
-                />
+                <Input id="name" placeholder="My Travel Photos" value={newCollection.name} onChange={(e) => setNewCollection((prev) => ({ ...prev, name: e.target.value }))} className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Photos from my trip to..."
-                  value={newCollection.description}
-                  onChange={(e) => setNewCollection(prev => ({ ...prev, description: e.target.value }))}
-                  className="mt-1"
-                  rows={3}
-                />
+                <Textarea id="description" placeholder="Photos from my trip to..." value={newCollection.description} onChange={(e) => setNewCollection((prev) => ({ ...prev, description: e.target.value }))} className="mt-1" rows={3} />
               </div>
-              <Button
-                onClick={createCollection}
-                disabled={creating || !newCollection.name.trim()}
-                className="w-full bg-gradient-primary hover:opacity-90"
-              >
-                {creating ? 'Creating...' : 'Create Collection'}
+              <Button onClick={createCollection} disabled={creating || !newCollection.name.trim()} className="w-full bg-gradient-primary hover:opacity-90">
+                {creating ? "Creating..." : "Create Collection"}
               </Button>
             </div>
           </DialogContent>
@@ -202,30 +198,13 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
           <CardContent className="p-8 text-center">
             <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No collections yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first photo collection to get started
-            </p>
-            <Button
-              onClick={() => setCreateDialogOpen(true)}
-              className="bg-gradient-primary hover:opacity-90"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create First Collection
-            </Button>
+            <p className="text-muted-foreground mb-4">Create your first photo collection to get started</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {collections.map((collection) => (
-            <Card
-              key={collection.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-elegant ${
-                selectedCollectionId === collection.id
-                  ? 'ring-2 ring-primary shadow-elegant'
-                  : 'hover:border-primary/50'
-              }`}
-              onClick={() => onSelectCollection(collection.id)}
-            >
+            <Card key={collection.id} className={`cursor-pointer transition-all duration-200 hover:shadow-elegant ${selectedCollectionId === collection.id ? "ring-2 ring-primary shadow-elegant" : "hover:border-primary/50"}`} onClick={() => onSelectCollection(collection.id)}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{collection.name}</CardTitle>
@@ -235,14 +214,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                {collection.description && (
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {collection.description}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Created {new Date(collection.created_at).toLocaleDateString()}
-                </p>
+                {collection.description && <p className="text-sm text-muted-foreground mb-2">{collection.description}</p>}
+                <p className="text-xs text-muted-foreground">Created {new Date(collection.created_at).toLocaleDateString()}</p>
               </CardContent>
             </Card>
           ))}

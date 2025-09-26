@@ -17,7 +17,7 @@ interface UploadedFile {
   id: string;
 }
 
-export function PhotoUpload({ collectionId, onPhotoUploaded }: PhotoUploadProps) {
+export function PhotoUpload({ collectionId, onPhotoUploaded }: Readonly<PhotoUploadProps>) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();

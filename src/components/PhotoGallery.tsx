@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Palette, Sparkles, Download, Heart } from 'lucide-react';
+import { Palette, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -21,7 +20,7 @@ interface PhotoGalleryProps {
   refreshTrigger: number;
 }
 
-export function PhotoGallery({ collectionId, refreshTrigger }: PhotoGalleryProps) {
+export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGalleryProps>) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
@@ -134,7 +133,6 @@ export function PhotoGallery({ collectionId, refreshTrigger }: PhotoGalleryProps
   }
 
   return (
-    <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {photos.map((photo) => (
           <Card key={photo.id} className="group overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300">
@@ -207,6 +205,5 @@ export function PhotoGallery({ collectionId, refreshTrigger }: PhotoGalleryProps
           </Card>
         ))}
       </div>
-    </>
   );
 }
