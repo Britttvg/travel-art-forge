@@ -14,7 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      generated_artworks: {
+        Row: {
+          artwork_url: string
+          collection_id: string
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          prompt_used: string | null
+          style_settings: Json
+          user_id: string
+        }
+        Insert: {
+          artwork_url: string
+          collection_id: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          prompt_used?: string | null
+          style_settings: Json
+          user_id: string
+        }
+        Update: {
+          artwork_url?: string
+          collection_id?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          prompt_used?: string | null
+          style_settings?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_artworks_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "photo_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_collections: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      travel_photos: {
+        Row: {
+          collection_id: string
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          original_name: string
+          uploaded_at: string
+        }
+        Insert: {
+          collection_id: string
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          original_name: string
+          uploaded_at?: string
+        }
+        Update: {
+          collection_id?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          original_name?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_photos_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "photo_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
