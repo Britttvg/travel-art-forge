@@ -1,31 +1,57 @@
-import { useState } from 'react';
-import { Camera, Sparkles, Palette, User } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { CollectionManager } from '@/components/CollectionManager';
-import { PhotoUpload } from '@/components/PhotoUpload';
-import { PhotoGallery } from '@/components/PhotoGallery';
-import { ArtworkGallery } from '@/components/ArtworkGallery';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { Camera, Sparkles, Palette, User } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollectionManager } from "@/components/CollectionManager";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import { PhotoGallery } from "@/components/PhotoGallery";
+import { ArtworkGallery } from "@/components/ArtworkGallery";
+import { supabase } from "../lib/supabaseClient";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [user, setUser] = useState<unknown>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Simple auth demo - in a real app you'd have proper auth flow
-  const signInDemo = async () => {
-    toast({
-      title: "Demo Mode",
-      description: "This is a demo. In a real app, you'd implement proper authentication.",
+  const signIn = async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
-    setUser({ id: 'demo-user' });
+    if (error) setError(error.message);
+    else {
+      toast({
+        title: "Logged in!",
+        description: "You have successfully signed in.",
+      });
+      setUser(data.user);
+    }
+    setLoading(false);
+  };
+
+  // NOT USED YET
+  const signUp = async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) setError(error.message);
+    setLoading(false);
   };
 
   const handlePhotoUploaded = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -43,12 +69,20 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Transform travel photos into AI artwork</p>
               </div>
             </div>
-            {!user && (
-              <Button onClick={signInDemo} className="bg-gradient-primary hover:opacity-90">
+            <div>
+              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
+              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
+
+              <Button onClick={signIn} disabled={loading} className="bg-gradient-primary hover:opacity-90">
                 <User className="mr-2 h-4 w-4" />
-                Demo Sign In
+                Sign In
               </Button>
-            )}
+              <Button onClick={signUp} disabled={true} className="bg-gradient-primary hover:opacity-90">
+                <User className="mr-2 h-4 w-4" />
+                Sign Up
+              </Button>
+              {error && <p className="text-red-500">{error}</p>}
+            </div>
           </div>
         </div>
       </header>
@@ -57,12 +91,8 @@ const Index = () => {
       <section className="py-8 text-center">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-6xl font-bold mb-7 bg-gradient-primary bg-clip-text text-transparent pb-3">
-              Turn Your Travel Photos Into Stunning Art
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Upload your travel photos and let AI transform them into beautiful artwork descriptions using Ollama's Tinyllama model
-            </p>
+            <h2 className="text-3xl md:text-6xl font-bold mb-7 bg-gradient-primary bg-clip-text text-transparent pb-3">Turn Your Travel Photos Into Stunning Art</h2>
+            <p className="text-xl text-muted-foreground mb-8">Upload your travel photos and let AI transform them into beautiful artwork descriptions using Ollama's Tinyllama model</p>
             <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <Camera className="h-5 w-5" />
@@ -88,10 +118,7 @@ const Index = () => {
           <div className="lg:col-span-1">
             <Card className="shadow-soft">
               <CardContent className="p-6">
-                <CollectionManager
-                  selectedCollectionId={selectedCollectionId}
-                  onSelectCollection={setSelectedCollectionId}
-                />
+                <CollectionManager selectedCollectionId={selectedCollectionId} onSelectCollection={setSelectedCollectionId} />
               </CardContent>
             </Card>
           </div>
@@ -119,10 +146,7 @@ const Index = () => {
                   <Card className="shadow-soft">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold mb-4">Photo Gallery</h3>
-                      <PhotoGallery
-                        collectionId={selectedCollectionId}
-                        refreshTrigger={refreshTrigger}
-                      />
+                      <PhotoGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} />
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -131,10 +155,7 @@ const Index = () => {
                   <Card className="shadow-soft">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold mb-4">Upload New Photos</h3>
-                      <PhotoUpload
-                        collectionId={selectedCollectionId}
-                        onPhotoUploaded={handlePhotoUploaded}
-                      />
+                      <PhotoUpload collectionId={selectedCollectionId} onPhotoUploaded={handlePhotoUploaded} />
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -152,12 +173,8 @@ const Index = () => {
                 <CardContent className="p-12 text-center">
                   <Palette className="mx-auto h-16 w-16 text-muted-foreground mb-6 animate-float" />
                   <h3 className="text-2xl font-bold mb-4">Welcome to Travel Art Studio</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Create your first photo collection to start transforming your travel memories into beautiful AI-generated artwork descriptions.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Select or create a collection from the sidebar to get started.
-                  </p>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">Create your first photo collection to start transforming your travel memories into beautiful AI-generated artwork descriptions.</p>
+                  <p className="text-sm text-muted-foreground">Select or create a collection from the sidebar to get started.</p>
                 </CardContent>
               </Card>
             )}

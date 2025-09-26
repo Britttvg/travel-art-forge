@@ -1,5 +1,6 @@
+/// <reference lib="deno.ns" />
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { supabase } from '../../../src/integrations/supabase/client'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ interface OllamaResponse {
   context?: number[];
 }
 
-serve(async (req) => {
+serve(async (req: { method: string; json: () => PromiseLike<{ prompt: string; photoId: string; userId: string; }> | { prompt: string; photoId: string; userId: string; }; }) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -49,11 +50,6 @@ serve(async (req) => {
 
     console.log('Generated artistic description:', artisticDescription)
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
     // Store the generated artwork description in the database
     const { data: artwork, error } = await supabase
       .from('generated_artworks')
@@ -75,9 +71,9 @@ serve(async (req) => {
     console.log('Artwork saved to database:', artwork.id)
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         artwork,
-        description: artisticDescription 
+        description: artisticDescription
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -87,7 +83,7 @@ serve(async (req) => {
     console.error('Error in generate-artwork function:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: errorMessage,
         details: 'Make sure Ollama is running locally with tinyllama model installed'
       }),
