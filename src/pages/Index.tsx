@@ -7,13 +7,12 @@ import { CollectionManager } from '@/components/CollectionManager';
 import { PhotoUpload } from '@/components/PhotoUpload';
 import { PhotoGallery } from '@/components/PhotoGallery';
 import { ArtworkGallery } from '@/components/ArtworkGallery';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
   const { toast } = useToast();
 
   // Simple auth demo - in a real app you'd have proper auth flow
@@ -55,10 +54,10 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-16 text-center">
+      <section className="py-8 text-center">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-6xl font-bold mb-7 bg-gradient-primary bg-clip-text text-transparent pb-3">
               Turn Your Travel Photos Into Stunning Art
             </h2>
             <p className="text-xl text-muted-foreground mb-8">

@@ -87,14 +87,14 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
     setCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to create collections",
-          variant: "destructive"
-        });
-        return;
-      }
+      // if (!user) {
+      //   toast({
+      //     title: "Authentication required",
+      //     description: "Please sign in to create collections",
+      //     variant: "destructive"
+      //   });
+      //   return;
+      // }
 
       const { data, error } = await supabase
         .from('photo_collections')
