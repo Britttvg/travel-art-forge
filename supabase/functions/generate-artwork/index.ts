@@ -59,10 +59,10 @@ serve(async (req) => {
       .from('generated_artworks')
       .insert({
         user_id: userId,
-        photo_id: photoId,
-        prompt: prompt,
-        generated_description: artisticDescription,
-        status: 'completed'
+        collection_id: photoId, // Using photoId as collection_id for now
+        artwork_url: `Generated description: ${artisticDescription}`,
+        style_settings: { prompt: prompt },
+        prompt_used: prompt
       })
       .select()
       .single()
