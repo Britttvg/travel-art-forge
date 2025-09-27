@@ -37,26 +37,18 @@ serve(async (req) => {
 
     console.log('Generating artwork with prompt:', prompt);
 
-    // Call Ollama API running locally
-    const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tinyllama',
-        prompt: `Create an artistic description for generating artwork based on this prompt: ${prompt}. Focus on artistic style, colors, mood, and visual elements.`,
-        stream: false
-      }),
-    });
+    // Generate artistic description using a simple template for now
+    // TODO: Replace with actual AI service (OpenAI, Anthropic, etc.)
+    const artisticDescription = `Create a beautiful artwork inspired by "${prompt}". 
 
-    if (!ollamaResponse.ok) {
-      console.error('Ollama API error:', ollamaResponse.status, ollamaResponse.statusText);
-      throw new Error(`Ollama API error: ${ollamaResponse.status}`);
-    }
-
-    const ollamaData: OllamaResponse = await ollamaResponse.json();
-    const artisticDescription = ollamaData.response;
+    Style: Dreamy impressionist painting with vibrant colors
+    Mood: Peaceful and contemplative 
+    Colors: Warm golden hour lighting with soft pastels
+    Composition: Sweeping landscapes with gentle curves and flowing lines
+    Medium: Oil painting with visible brushstrokes
+    Atmosphere: Ethereal and romantic with soft focus effects
+    
+    This artwork should capture the essence of travel and adventure, transforming your photo into a masterpiece that evokes wanderlust and artistic beauty.`;
 
     console.log('Generated artistic description:', artisticDescription);
 
@@ -95,7 +87,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: errorMessage,
-        details: 'Make sure Ollama is running locally with tinyllama model installed'
+        details: 'Error generating artwork description'
       }),
       {
         status: 500,
