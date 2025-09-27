@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import ThemeToggle from "../components/ThemeToggle";
 import { Camera, Sparkles, Palette, User as UserIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -24,17 +25,17 @@ const Index = () => {
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session);
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session);
+      console.log("Initial session:", session);
       setSession(session);
       setUser(session?.user ?? null);
     });
@@ -50,10 +51,10 @@ const Index = () => {
       password,
     });
     if (error) {
-      console.error('Sign in error:', error);
+      console.error("Sign in error:", error);
       setError(error.message);
     } else {
-      console.log('Sign in success:', data);
+      console.log("Sign in success:", data);
       toast({
         title: "Logged in!",
         description: "You have successfully signed in.",
@@ -113,6 +114,10 @@ const Index = () => {
                 </>
               )}
               {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              {/* Theme toggle in header */}
+              <div className="ml-4">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>
@@ -159,13 +164,13 @@ const Index = () => {
             {selectedCollectionId ? (
               <Tabs defaultValue="photos" className="space-y-6">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="photos" className="flex items-center space-x-2">
-                    <Camera className="h-4 w-4" />
-                    <span>Photos</span>
-                  </TabsTrigger>
                   <TabsTrigger value="upload" className="flex items-center space-x-2">
                     <Sparkles className="h-4 w-4" />
                     <span>Upload</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="photos" className="flex items-center space-x-2">
+                    <Camera className="h-4 w-4" />
+                    <span>Photos</span>
                   </TabsTrigger>
                   <TabsTrigger value="artworks" className="flex items-center space-x-2">
                     <Palette className="h-4 w-4" />
