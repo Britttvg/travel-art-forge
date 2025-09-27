@@ -187,7 +187,6 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                 <span>Created on {new Date(artwork.created_at).toLocaleString()}</span>
-                <span>Powered by Ollama Tinyllama</span>
               </div>
             </CardContent>
           </Card>

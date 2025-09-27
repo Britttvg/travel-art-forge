@@ -128,7 +128,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-6xl font-bold mb-7 bg-gradient-primary bg-clip-text text-transparent pb-3">Turn Your Travel Photos Into Stunning Art</h2>
-            <p className="text-xl text-muted-foreground mb-8">Upload your travel photos and let AI transform them into beautiful artwork descriptions using Ollama's Tinyllama model</p>
+            <p className="text-xl text-muted-foreground mb-8">Upload your travel photos and let AI transform them into beautiful artworks</p>
             <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <Camera className="h-5 w-5" />
