@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Camera, Sparkles, Palette, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Camera, Sparkles, Palette, User as UserIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,18 +7,40 @@ import { CollectionManager } from "@/components/CollectionManager";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { PhotoGallery } from "@/components/PhotoGallery";
 import { ArtworkGallery } from "@/components/ArtworkGallery";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { User, Session } from "@supabase/supabase-js";
 
 const Index = () => {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [user, setUser] = useState<unknown>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state changed:', event, session);
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session);
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const signIn = async () => {
     setLoading(true);
@@ -27,13 +49,16 @@ const Index = () => {
       email,
       password,
     });
-    if (error) setError(error.message);
-    else {
+    if (error) {
+      console.error('Sign in error:', error);
+      setError(error.message);
+    } else {
+      console.log('Sign in success:', data);
       toast({
         title: "Logged in!",
         description: "You have successfully signed in.",
       });
-      setUser(data.user);
+      // Don't manually set user/session - the auth state listener will handle it
     }
     setLoading(false);
   };
@@ -69,19 +94,25 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Transform travel photos into AI artwork</p>
               </div>
             </div>
-            <div>
-              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
-              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
-
-              <Button onClick={signIn} disabled={loading} className="bg-gradient-primary hover:opacity-90">
-                <User className="mr-2 h-4 w-4" />
-                Sign In
-              </Button>
-              <Button onClick={signUp} disabled={true} className="bg-gradient-primary hover:opacity-90">
-                <User className="mr-2 h-4 w-4" />
-                Sign Up
-              </Button>
-              {error && <p className="text-red-500">{error}</p>}
+            <div className="flex items-center space-x-2">
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Welcome, {user.email}</span>
+                  <Button onClick={() => supabase.auth.signOut()} variant="outline" size="sm">
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
+                  <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
+                  <Button onClick={signIn} disabled={loading} className="bg-gradient-primary hover:opacity-90">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    Sign In
+                  </Button>
+                </>
+              )}
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             </div>
           </div>
         </div>
