@@ -55,10 +55,13 @@ export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGal
   };
 
   const getPhotoUrl = (filePath: string) => {
-    const { data } = supabase.storage
-      .from('travel-photos')
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+    try {
+      const { data } = supabase.storage.from('travel-photos').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error getting photo URL:', error);
+      return '/placeholder.svg';
+    }
   };
 
   const generateArtwork = async () => {
@@ -87,7 +90,8 @@ export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGal
         body: {
           photoId: selectedPhoto.id,
           prompt: prompt.trim(),
-          userId: user.id
+          userId: user.id,
+          collectionId: collectionId
         }
       });
 
@@ -104,7 +108,7 @@ export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGal
       console.error('Generation error:', error);
       toast({
         title: "Generation failed",
-        description: "Please make sure Ollama is running with tinyllama model",
+        description: "Failed to generate artwork description. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -142,6 +146,11 @@ export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGal
                   src={getPhotoUrl(photo.file_path)}
                   alt={photo.original_name}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                    target.alt = 'Image not available - Please upload photos to local Supabase';
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                   <Dialog>
@@ -166,6 +175,11 @@ export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGal
                               src={getPhotoUrl(selectedPhoto.file_path)}
                               alt={selectedPhoto.original_name}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/placeholder.svg';
+                                target.alt = 'Image not available';
+                              }}
                             />
                           </div>
                         )}
@@ -187,7 +201,7 @@ export function PhotoGallery({ collectionId, refreshTrigger }: Readonly<PhotoGal
                             className="w-full bg-gradient-primary hover:opacity-90"
                           >
                             <Sparkles className="mr-2 h-4 w-4" />
-                            {generating ? 'Generating with Ollama...' : 'Generate Artwork Description'}
+                            {generating ? 'Generating Artwork...' : 'Generate Artwork Description'}
                           </Button>
                         </div>
                       </div>
