@@ -6,7 +6,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "lib": ["deno.json"],
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,

@@ -33,6 +33,7 @@ npm run dev
 ```sh
 # nog nodig?? 
 npx supabase start
+npx supabase login
 ```
 
 ```sh
