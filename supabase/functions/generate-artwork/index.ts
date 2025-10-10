@@ -43,7 +43,15 @@ serve(async (req) => {
     };
 
     const styleDesc = styleDescriptions[artStyle] || styleDescriptions.impressionist;
-    const fullPrompt = `Create a beautiful ${styleDesc} that artistically combines and blends these ${photoUrls.length} travel photos into a single cohesive artwork. ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
+    const fullPrompt = `Create a beautiful ${styleDesc} that artistically combines and blends these ${photoUrls.length} travel photos into a single cohesive artwork. 
+    
+CRITICAL REQUIREMENTS:
+- If any people appear in the photos, you MUST preserve them EXACTLY as they appear
+- DO NOT alter, modify, or change body shapes, facial features, or physical appearance of any people
+- Keep all people recognizable and true to their original appearance
+- Maintain accurate proportions and features for all human subjects
+
+${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
 
     // Call Lovable AI Gateway to generate image
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
