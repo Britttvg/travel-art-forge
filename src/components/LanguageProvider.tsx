@@ -28,6 +28,7 @@ const translations = {
     "auth.signIn": "Inloggen",
     "auth.loggedIn": "Ingelogd!",
     "auth.loggedInDesc": "Je bent succesvol ingelogd.",
+    "auth.signInToStart": "Log in om te beginnen met het maken van je reisfoto collecties.",
 
     // Hero Section
     "hero.title": "Verander Je Reisfoto's in Prachtige Kunst",
@@ -255,6 +256,7 @@ const translations = {
     "auth.signIn": "Sign In",
     "auth.loggedIn": "Logged in!",
     "auth.loggedInDesc": "You have successfully signed in.",
+    "auth.signInToStart": "Sign in to start creating your travel photo collections.",
 
     // Hero Section
     "hero.title": "Turn Your Travel Photos Into Stunning Art",

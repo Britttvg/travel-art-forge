@@ -6,6 +6,7 @@ import { Camera, Sparkles, Palette, User as UserIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { CollectionManager } from "@/components/CollectionManager";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { PhotoGallery } from "@/components/PhotoGallery";
@@ -35,6 +36,12 @@ const Index = () => {
       console.log("Auth state changed:", event, session);
       setSession(session);
       setUser(session?.user ?? null);
+
+      // Clear collections and reset state when user logs out
+      if (event === "SIGNED_OUT" || !session) {
+        setSelectedCollectionId(null);
+        setRefreshTrigger((prev) => prev + 1);
+      }
     });
 
     // THEN check for existing session
@@ -63,6 +70,9 @@ const Index = () => {
         title: t("auth.loggedIn"),
         description: t("auth.loggedInDesc"),
       });
+      // Refresh content after successful login
+      setRefreshTrigger((prev) => prev + 1);
+      setSelectedCollectionId(null);
       // Don't manually set user/session - the auth state listener will handle it
     }
     setLoading(false);
@@ -109,8 +119,8 @@ const Index = () => {
                 </div>
               ) : (
                 <>
-                  <input type="email" placeholder={t("auth.email")} value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
-                  <input type="password" placeholder={t("auth.password")} value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
+                  <Input type="email" placeholder={t("auth.email")} value={email} onChange={(e) => setEmail(e.target.value)} className="w-40" />
+                  <Input type="password" placeholder={t("auth.password")} value={password} onChange={(e) => setPassword(e.target.value)} className="w-40" />
                   <Button onClick={signIn} disabled={loading} className="bg-gradient-primary hover:opacity-90">
                     <UserIcon className="mr-2 h-4 w-4" />
                     {t("auth.signIn")}
@@ -154,61 +164,72 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 pb-16">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar - Collections */}
-          <div className="lg:col-span-1">
-            <Card className="shadow-soft">
-              <CardContent className="p-6">
-                <CollectionManager selectedCollectionId={selectedCollectionId} onSelectCollection={setSelectedCollectionId} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="lg:col-span-3">
-            {selectedCollectionId ? (
-              <Tabs defaultValue="upload" className="max-w-6xl mx-auto">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="upload">{t("tabs.upload")}</TabsTrigger>
-                  <TabsTrigger value="photos">{t("tabs.photos")}</TabsTrigger>
-                  <TabsTrigger value="artworks">{t("tabs.artworks")}</TabsTrigger>
-                </TabsList>{" "}
-                <TabsContent value="upload" className="space-y-6">
-                  <Card className="shadow-soft">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">{t("photos.upload.title")}</h3>
-                      <PhotoUpload collectionId={selectedCollectionId} onPhotoUploaded={handlePhotoUploaded} />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                <TabsContent value="photos" className="space-y-6">
-                  <Card className="shadow-soft">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">{t("photos.title")}</h3>
-                      <PhotoGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} onArtworkGenerated={() => setActiveTab("artworks")} />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                <TabsContent value="artworks" className="space-y-6">
-                  <Card className="shadow-soft">
-                    <CardContent className="p-6">
-                      <ArtworkGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            ) : (
+        {user ? (
+          <div className="grid lg:grid-cols-4 gap-8">
+            {/* Sidebar - Collections */}
+            <div className="lg:col-span-1">
               <Card className="shadow-soft">
-                <CardContent className="p-12 text-center">
-                  <Palette className="mx-auto h-16 w-16 text-muted-foreground mb-6 animate-float" />
-                  <h3 className="text-2xl font-bold mb-4">{t("welcome.title")}</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t("welcome.subtitle")}</p>
-                  <p className="text-sm text-muted-foreground">{t("welcome.getStarted")}</p>
+                <CardContent className="p-6">
+                  <CollectionManager selectedCollectionId={selectedCollectionId} onSelectCollection={setSelectedCollectionId} />
                 </CardContent>
               </Card>
-            )}
+            </div>
+
+            {/* Main Content Area */}
+            <div className="lg:col-span-3">
+              {selectedCollectionId ? (
+                <Tabs defaultValue="upload" className="max-w-6xl mx-auto">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="upload">{t("tabs.upload")}</TabsTrigger>
+                    <TabsTrigger value="photos">{t("tabs.photos")}</TabsTrigger>
+                    <TabsTrigger value="artworks">{t("tabs.artworks")}</TabsTrigger>
+                  </TabsList>{" "}
+                  <TabsContent value="upload" className="space-y-6">
+                    <Card className="shadow-soft">
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold mb-4">{t("photos.upload.title")}</h3>
+                        <PhotoUpload collectionId={selectedCollectionId} onPhotoUploaded={handlePhotoUploaded} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="photos" className="space-y-6">
+                    <Card className="shadow-soft">
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold mb-4">{t("photos.title")}</h3>
+                        <PhotoGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} onArtworkGenerated={() => setActiveTab("artworks")} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="artworks" className="space-y-6">
+                    <Card className="shadow-soft">
+                      <CardContent className="p-6">
+                        <ArtworkGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <Card className="shadow-soft">
+                  <CardContent className="p-12 text-center">
+                    <Palette className="mx-auto h-16 w-16 text-muted-foreground mb-6 animate-float" />
+                    <h3 className="text-2xl font-bold mb-4">{t("welcome.title")}</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t("welcome.subtitle")}</p>
+                    <p className="text-sm text-muted-foreground">{t("welcome.getStarted")}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <Card className="shadow-soft max-w-2xl mx-auto">
+            <CardContent className="p-12 text-center">
+              <Palette className="mx-auto h-16 w-16 text-muted-foreground mb-6 animate-float" />
+              <h3 className="text-2xl font-bold mb-4">{t("welcome.title")}</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t("welcome.subtitle")}</p>
+              <p className="text-sm text-muted-foreground">{t("auth.signInToStart")}</p>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
