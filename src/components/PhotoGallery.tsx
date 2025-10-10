@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Palette, Sparkles, Check } from "lucide-react";
+import { Palette, Sparkles, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 
 interface Photo {
   id: string;
@@ -29,6 +30,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   const [artStyle, setArtStyle] = useState("impressionist");
   const [generating, setGenerating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,6 +75,46 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
     setSelectedPhotos(newSelection);
   };
 
+  const handleDeletePhotos = async () => {
+    setDeleting(true);
+    try {
+      const photoIds = Array.from(selectedPhotos);
+      const photosToDelete = photos.filter((p) => selectedPhotos.has(p.id));
+
+      // Delete from storage
+      for (const photo of photosToDelete) {
+        const { error: storageError } = await supabase.storage.from("travel-photos").remove([photo.file_path]);
+
+        if (storageError) {
+          console.error("Storage deletion error:", storageError);
+        }
+      }
+
+      // Delete from database
+      const { error } = await supabase.from("travel_photos").delete().in("id", photoIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Photos deleted",
+        description: `${photoIds.length} photo${photoIds.length > 1 ? "s" : ""} deleted successfully.`,
+      });
+
+      // Remove from local state
+      setPhotos((prev) => prev.filter((p) => !selectedPhotos.has(p.id)));
+      setSelectedPhotos(new Set());
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        title: "Failed to delete photos",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const generateArtwork = async () => {
     if (selectedPhotos.size < 2 || !prompt.trim()) {
       toast({
@@ -97,9 +139,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
         return;
       }
 
-      const selectedPhotoUrls = photos
-        .filter(p => selectedPhotos.has(p.id))
-        .map(p => getPhotoUrl(p.file_path));
+      const selectedPhotoUrls = photos.filter((p) => selectedPhotos.has(p.id)).map((p) => getPhotoUrl(p.file_path));
 
       const { data, error } = await supabase.functions.invoke("generate-artwork", {
         body: {
@@ -155,19 +195,33 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
 
   return (
     <div className="space-y-4">
-      {selectedPhotos.size >= 2 && (
+      {selectedPhotos.size > 0 && (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b pb-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {selectedPhotos.size} photos selected
+              {selectedPhotos.size} photo{selectedPhotos.size > 1 ? "s" : ""} selected
             </p>
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="bg-gradient-primary hover:opacity-90"
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate Art from Selection
-            </Button>
+            <div className="flex gap-2">
+              <ConfirmDeleteDialog
+                trigger={
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Selected
+                  </Button>
+                }
+                title="Delete Photos?"
+                description={`Are you sure you want to delete ${selectedPhotos.size} photo${selectedPhotos.size > 1 ? "s" : ""}? This action cannot be undone.`}
+                onConfirm={handleDeletePhotos}
+                isDeleting={deleting}
+                itemCount={selectedPhotos.size}
+              />
+              {selectedPhotos.size >= 2 && (
+                <Button onClick={() => setDialogOpen(true)} className="bg-gradient-primary hover:opacity-90">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Art
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -176,11 +230,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
         {photos.map((photo) => {
           const isSelected = selectedPhotos.has(photo.id);
           return (
-            <Card 
-              key={photo.id} 
-              className={`group overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`}
-              onClick={() => togglePhotoSelection(photo.id)}
-            >
+            <Card key={photo.id} className={`group overflow-hidden shadow-soft hover:shadow-elegant transition-all duration-300 cursor-pointer ${isSelected ? "ring-2 ring-primary" : ""}`} onClick={() => togglePhotoSelection(photo.id)}>
               <CardContent className="p-0">
                 <div className="aspect-square relative overflow-hidden">
                   <img
@@ -193,9 +243,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
                       target.alt = "Image not available";
                     }}
                   />
-                  <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-primary' : 'bg-background/80 border-border'}`}>
-                    {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
-                  </div>
+                  <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-primary border-primary" : "bg-background/80 border-border"}`}>{isSelected && <Check className="h-4 w-4 text-primary-foreground" />}</div>
                 </div>
                 <div className="p-3">
                   <p className="text-sm font-medium truncate">{photo.original_name}</p>
@@ -207,31 +255,28 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
         })}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={(open) => {
-        setDialogOpen(open);
-        if (!open) {
-          setPrompt("");
-          setArtStyle("impressionist");
-        }
-      }}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setPrompt("");
+            setArtStyle("impressionist");
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Generate Artwork from {selectedPhotos.size} Photos</DialogTitle>
-            <DialogDescription>
-              Combine your selected photos into a beautiful AI-generated artwork
-            </DialogDescription>
+            <DialogDescription>Combine your selected photos into a beautiful AI-generated artwork</DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-2">
               {photos
-                .filter(p => selectedPhotos.has(p.id))
-                .map(photo => (
+                .filter((p) => selectedPhotos.has(p.id))
+                .map((photo) => (
                   <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden">
-                    <img
-                      src={getPhotoUrl(photo.file_path)}
-                      alt={photo.original_name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={getPhotoUrl(photo.file_path)} alt={photo.original_name} className="w-full h-full object-cover" />
                   </div>
                 ))}
             </div>
@@ -254,21 +299,10 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
                 </Select>
               </div>
               <div>
-                <Label htmlFor="prompt">Additional Details (Optional)</Label>
-                <Textarea
-                  id="prompt"
-                  placeholder="Add any specific details about mood, colors, composition..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={3}
-                  className="mt-1"
-                />
+                <Label htmlFor="prompt">Additional Details</Label>
+                <Textarea id="prompt" placeholder="Add any specific details about mood, colors, composition..." value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} className="mt-1" />
               </div>
-              <Button
-                onClick={generateArtwork}
-                disabled={generating || selectedPhotos.size < 2}
-                className="w-full bg-gradient-primary hover:opacity-90"
-              >
+              <Button onClick={generateArtwork} disabled={generating || selectedPhotos.size < 2 || !prompt} className="w-full bg-gradient-primary hover:opacity-90">
                 <Sparkles className="mr-2 h-4 w-4" />
                 {generating ? "Generating Artwork..." : "Generate Artwork"}
               </Button>

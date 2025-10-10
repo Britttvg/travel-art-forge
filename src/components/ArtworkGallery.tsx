@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Palette, Copy, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 
 interface GeneratedArtwork {
   id: string;
@@ -27,8 +27,8 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { toast } = useToast();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
   const handleDelete = async (id: string) => {
     setDeleting(true);
     try {
@@ -48,7 +48,6 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
       });
     } finally {
       setDeleting(false);
-      setDeleteId(null);
     }
   };
 
@@ -150,27 +149,17 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
                   <Button size="sm" variant="outline" onClick={() => copyToClipboard(artwork.prompt_used || "", artwork.id)} className="h-8 w-8 p-0" aria-label="Copy">
                     {copiedId === artwork.id ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="outline" className="h-8 w-8 p-0" aria-label="Delete" onClick={() => setDeleteId(artwork.id)}>
+                  <ConfirmDeleteDialog
+                    trigger={
+                      <Button size="sm" variant="outline" className="h-8 w-8 p-0" aria-label="Delete">
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
-                    </AlertDialogTrigger>
-                    {deleteId === artwork.id && (
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Artwork?</AlertDialogTitle>
-                          <AlertDialogDescription>Are you sure you want to delete this artwork? This action cannot be undone.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setDeleteId(null)}>Cancel</AlertDialogCancel>
-                          <AlertDialogAction disabled={deleting} onClick={() => handleDelete(artwork.id)}>
-                            {deleting ? "Deleting..." : "Delete"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    )}
-                  </AlertDialog>
+                    }
+                    title="Delete Artwork?"
+                    description="Are you sure you want to delete this artwork? This action cannot be undone."
+                    onConfirm={() => handleDelete(artwork.id)}
+                    isDeleting={deleting}
+                  />
                 </div>
               </div>
             </CardHeader>
@@ -183,8 +172,8 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
               <div>
                 <h4 className="font-medium text-sm text-muted-foreground mb-2">Generated Artwork:</h4>
                 <div className="rounded-lg overflow-hidden border shadow-md mb-2">
-                  <img 
-                    src={artwork.artwork_url} 
+                  <img
+                    src={artwork.artwork_url}
                     alt="Generated AI artwork"
                     className="w-full h-auto"
                     onError={(e) => {

@@ -47,9 +47,10 @@ serve(async (req) => {
     
 CRITICAL REQUIREMENTS:
 - If any people appear in the photos, you MUST preserve them EXACTLY as they appear
+- DO NOT include people that are not in the original photos
 - DO NOT alter, modify, or change body shapes, facial features, or physical appearance of any people
 - Keep all people recognizable and true to their original appearance
-- Maintain accurate proportions and features for all human subjects
+- Maintain accurate proportions and features for all human subjects.
 
 ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
 
@@ -95,7 +96,7 @@ ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
     // Upload the generated image to Supabase storage
     const base64Data = generatedImageUrl.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-    
+
     const fileName = `artwork-${Date.now()}.png`;
     const { data: uploadData, error: uploadError } = await supabaseClient.storage
       .from('generated-artworks')
