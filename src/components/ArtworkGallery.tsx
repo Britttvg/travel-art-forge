@@ -15,6 +15,7 @@ interface GeneratedArtwork {
   user_id: string;
   style_settings: unknown;
   prompt_used: string | null;
+  title: string | null;
   created_at: string;
   is_favorite: boolean | null;
 }
@@ -150,7 +151,7 @@ export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<Artwor
           <Card key={artwork.id} className="shadow-soft hover:shadow-elegant transition-all duration-300">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{t("artwork.aiGeneratedTitle")}</CardTitle>
+                <CardTitle className="text-lg">{artwork.title || t("artwork.aiGeneratedTitle")}</CardTitle>
                 <div className="flex items-center gap-2">
                   <ConfirmDeleteDialog
                     trigger={

@@ -3,6 +3,7 @@ import { Palette, Sparkles, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +29,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   const [loading, setLoading] = useState(true);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [prompt, setPrompt] = useState("");
+  const [artworkTitle, setArtworkTitle] = useState("");
   const [artStyle, setArtStyle] = useState("impressionist");
   const [generating, setGenerating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -118,7 +120,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   };
 
   const generateArtwork = async () => {
-    if (selectedPhotos.size < 2 || !prompt.trim()) {
+    if (selectedPhotos.size < 2 || !prompt.trim() || !artworkTitle.trim()) {
       toast({
         title: t("artwork.errors.missingInfo"),
         description: t("artwork.errors.selectPhotosPrompt"),
@@ -147,6 +149,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
         body: {
           photoUrls: selectedPhotoUrls,
           prompt: prompt.trim(),
+          title: artworkTitle.trim(),
           artStyle,
           userId: user.id,
           collectionId: collectionId,
@@ -161,6 +164,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
       });
       setSelectedPhotos(new Set());
       setPrompt("");
+      setArtworkTitle("");
       setDialogOpen(false);
       if (onArtworkGenerated) onArtworkGenerated();
     } catch (error) {
@@ -263,6 +267,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
           setDialogOpen(open);
           if (!open) {
             setPrompt("");
+            setArtworkTitle("");
             setArtStyle("impressionist");
           }
         }}
@@ -286,6 +291,10 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
             </div>
             <div className="space-y-4">
               <div>
+                <Label htmlFor="title">{t("artwork.title")}</Label>
+                <Input id="title" placeholder={t("artwork.titlePlaceholder")} value={artworkTitle} onChange={(e) => setArtworkTitle(e.target.value)} className="mt-1" />
+              </div>
+              <div>
                 <Label htmlFor="style">{t("artwork.style")}</Label>
                 <Select value={artStyle} onValueChange={setArtStyle}>
                   <SelectTrigger className="mt-1">
@@ -306,7 +315,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
                 <Label htmlFor="prompt">{t("artwork.additionalDetails")}</Label>
                 <Textarea id="prompt" placeholder={t("artwork.promptPlaceholder")} value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} className="mt-1" />
               </div>
-              <Button onClick={generateArtwork} disabled={generating || selectedPhotos.size < 2 || !prompt} className="w-full bg-gradient-primary hover:opacity-90">
+              <Button onClick={generateArtwork} disabled={generating || selectedPhotos.size < 2 || !prompt.trim() || !artworkTitle.trim()} className="w-full bg-gradient-primary hover:opacity-90">
                 <Sparkles className="mr-2 h-4 w-4" />
                 {generating ? t("artwork.generating") : t("artwork.generate")}
               </Button>

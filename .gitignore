@@ -28,4 +28,6 @@ todo.txt
 
 .env
 
+supabase/.temp/
+
 api/__pycache__/

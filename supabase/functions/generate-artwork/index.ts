@@ -23,7 +23,7 @@ serve(async (req) => {
       }
     );
 
-    const { prompt, photoUrls, artStyle, userId, collectionId } = await req.json();
+    const { prompt, title, photoUrls, artStyle, userId, collectionId } = await req.json();
 
     if (!photoUrls || photoUrls.length < 2 || !userId || !collectionId) {
       throw new Error('At least 2 photo URLs, userId, and collectionId are required');
@@ -125,6 +125,7 @@ ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
         user_id: userId,
         collection_id: collectionId,
         artwork_url: artworkUrl,
+        title: title,
         style_settings: { prompt, artStyle, photoCount: photoUrls.length },
         prompt_used: null // Do not store the prompt text
       })
