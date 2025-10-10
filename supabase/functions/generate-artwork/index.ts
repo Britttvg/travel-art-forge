@@ -29,37 +29,37 @@ serve(async (req) => {
       }
     );
 
-    const { prompt, photoId, userId, collectionId } = await req.json();
+    const { prompt, photoId, userId, collectionId, photoUrl } = await req.json();
 
-    if (!prompt || !photoId || !userId || !collectionId) {
-      throw new Error('Prompt, photoId, userId, and collectionId are required');
+    if (!prompt || !photoId || !userId || !collectionId || !photoUrl) {
+      throw new Error('Prompt, photoId, userId, collectionId, and photoUrl are required');
     }
 
-    console.log('Generating artwork with prompt:', prompt);
+    console.log('Generating artwork with prompt and photo:', prompt, photoUrl);
 
-    // Generate artistic description using a simple template for now
-    // TODO: Replace with actual AI service (OpenAI, Anthropic, etc.)
-    const artisticDescription = `Create a beautiful artwork inspired by "${prompt}". 
+    // Call Python Ollama API to generate artwork from photo and description
+    const ollamaApiUrl = Deno.env.get('OLLAMA_PROXY_URL') ?? 'http://localhost:8000/api/ollama';
+    const ollamaRes = await fetch(ollamaApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, photoUrl }),
+    });
+    if (!ollamaRes.ok) {
+      throw new Error(`Ollama API error: ${await ollamaRes.text()}`);
+    }
+    const ollamaData = await ollamaRes.json();
+    const artworkUrl = ollamaData.artwork_url || ollamaData.url || ollamaData.response || '';
 
-    Style: Dreamy impressionist painting with vibrant colors
-    Mood: Peaceful and contemplative 
-    Colors: Warm golden hour lighting with soft pastels
-    Composition: Sweeping landscapes with gentle curves and flowing lines
-    Medium: Oil painting with visible brushstrokes
-    Atmosphere: Ethereal and romantic with soft focus effects
-    
-    This artwork should capture the essence of travel and adventure, transforming your photo into a masterpiece that evokes wanderlust and artistic beauty.`;
+    console.log('Generated artwork URL:', artworkUrl);
 
-    console.log('Generated artistic description:', artisticDescription);
-
-    // Store the generated artwork description in the database
+    // Store the generated artwork in the database
     const { data: artwork, error } = await supabaseClient
       .from('generated_artworks')
       .insert({
         user_id: userId,
         collection_id: collectionId,
-        artwork_url: `Generated description: ${artisticDescription}`,
-        style_settings: { prompt: prompt },
+        artwork_url: artworkUrl,
+        style_settings: { prompt, photoUrl },
         prompt_used: prompt
       })
       .select()
@@ -75,7 +75,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         artwork,
-        description: artisticDescription
+        artwork_url: artworkUrl
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -15,6 +15,7 @@ import type { User, Session } from "@supabase/supabase-js";
 const Index = () => {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState<string>("photos");
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
@@ -162,7 +163,7 @@ const Index = () => {
           {/* Main Content Area */}
           <div className="lg:col-span-3">
             {selectedCollectionId ? (
-              <Tabs defaultValue="photos" className="space-y-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="upload" className="flex items-center space-x-2">
                     <Sparkles className="h-4 w-4" />
@@ -182,7 +183,11 @@ const Index = () => {
                   <Card className="shadow-soft">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold mb-4">Photo Gallery</h3>
-                      <PhotoGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} />
+                      <PhotoGallery
+                        collectionId={selectedCollectionId}
+                        refreshTrigger={refreshTrigger}
+                        onArtworkGenerated={() => setActiveTab("artworks")}
+                      />
                     </CardContent>
                   </Card>
                 </TabsContent>

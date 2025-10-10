@@ -23,15 +23,28 @@ The only requirement is having Node.js & npm installed - [install with nvm](http
 Follow these steps:
 
 ```sh
-# Install the necessary dependencies.
-npm i
+# Install Node.js dependencies
+npm install
 
-# Start the development server (localhost:8080) with auto-reloading and an instant preview.
+# Start the frontend development server
 npm run dev
 ```
 
 ```sh
-# nog nodig?? 
+# Create and activate a virtual environment
+cd api
+python -m venv venv
+source venv/bin/activate  # On Linux/Mac
+# or: venv\Scripts\activate  # On Windows
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start the FastAPI server
+uvicorn main:app --reload --port 8000
+```
+
+```sh
 npx supabase start
 npx supabase login
 ```

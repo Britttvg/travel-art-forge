@@ -27,3 +27,5 @@ notes.txt
 todo.txt
 
 .env
+
+api/__pycache__/
