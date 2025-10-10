@@ -66,6 +66,12 @@ const translations = {
     "collections.errors.nameRequired": "Collectie naam vereist",
     "collections.errors.enterName": "Voer een naam in voor je collectie",
     "collections.errors.createFailed": "Collectie maken mislukt",
+    "collections.errors.deleteFailed": "Collectie verwijderen mislukt",
+    "collections.delete": "Collectie verwijderen",
+    "collections.deleted": "Collectie verwijderd",
+    "collections.deletedSuccessfully": "is succesvol verwijderd",
+    "collections.deleteConfirmTitle": "Collectie Verwijderen?",
+    "collections.deleteConfirmDescription": "Weet je zeker dat je collectie wilt verwijderen",
 
     // Photo Upload
     "upload.title": "Nieuwe Foto's Uploaden",
@@ -290,6 +296,12 @@ const translations = {
     "collections.errors.nameRequired": "Collection name required",
     "collections.errors.enterName": "Please enter a name for your collection",
     "collections.errors.createFailed": "Failed to create collection",
+    "collections.errors.deleteFailed": "Failed to delete collection",
+    "collections.delete": "Delete collection",
+    "collections.deleted": "Collection deleted",
+    "collections.deletedSuccessfully": "has been deleted successfully",
+    "collections.deleteConfirmTitle": "Delete Collection?",
+    "collections.deleteConfirmDescription": "Are you sure you want to delete collection",
 
     // Photo Upload
     "upload.title": "Upload New Photos",

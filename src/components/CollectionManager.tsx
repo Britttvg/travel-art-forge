@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, FolderOpen } from "lucide-react";
+import { Plus, FolderOpen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/components/LanguageProvider";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 
 interface Collection {
   id: string;
@@ -30,6 +31,7 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newCollection, setNewCollection] = useState({ name: "", description: "" });
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1400);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -84,6 +86,36 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteCollection = async (collectionId: string, collectionName: string) => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("photo_collections").delete().eq("id", collectionId);
+      if (error) throw error;
+
+      toast({
+        title: t("collections.deleted"),
+        description: `"${collectionName}" ${t("collections.deletedSuccessfully")}`,
+      });
+
+      // If the deleted collection was selected, clear selection
+      if (selectedCollectionId === collectionId) {
+        onSelectCollection("");
+      }
+
+      // Refresh collections list
+      fetchCollections();
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+      toast({
+        title: t("collections.errors.deleteFailed"),
+        description: t("common.tryAgain"),
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -210,9 +242,22 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{collection.name}</CardTitle>
-                  <Badge variant="secondary" className="text-xs">
-                    {collection.photo_count || 0} {t(collection.photo_count === 1 ? "photos.photo" : "photos.photos")}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {collection.photo_count || 0} {t(collection.photo_count === 1 ? "photos.photo" : "photos.photos")}
+                    </Badge>
+                    <ConfirmDeleteDialog
+                      trigger={
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-destructive/20 dark:hover:bg-destructive/30 hover:scale-110 transition-all duration-200" onClick={(e) => e.stopPropagation()} aria-label={t("collections.delete")}>
+                          <Trash2 className="h-4 w-4 text-destructive hover:text-destructive-foreground" />
+                        </Button>
+                      }
+                      title={t("collections.deleteConfirmTitle")}
+                      description={`${t("collections.deleteConfirmDescription")} "${collection.name}"? ${t("common.undoWarning")}`}
+                      onConfirm={() => deleteCollection(collection.id, collection.name)}
+                      isDeleting={deleting}
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
