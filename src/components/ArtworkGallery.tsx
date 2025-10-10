@@ -152,12 +152,6 @@ export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<Artwor
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{t("artwork.aiGeneratedTitle")}</CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant={artwork.is_favorite ? "default" : "secondary"} className="text-xs">
-                    {artwork.is_favorite ? t("artwork.favorite") : t("artwork.standard")}
-                  </Badge>
-                  <Button size="sm" variant="outline" onClick={() => copyToClipboard(artwork.prompt_used || "", artwork.id)} className="h-8 w-8 p-0" aria-label="Copy">
-                    {copiedId === artwork.id ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
                   <ConfirmDeleteDialog
                     trigger={
                       <Button size="sm" variant="outline" className="h-8 w-8 p-0" aria-label="Delete">
@@ -173,11 +167,6 @@ export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<Artwor
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-2">{t("artwork.promptUsed")}:</h4>
-                <p className="text-sm bg-muted p-3 rounded-lg italic">"{artwork.prompt_used || t("artwork.noPromptAvailable")}"</p>
-              </div>
-
               <div>
                 <h4 className="font-medium text-sm text-muted-foreground mb-2">{t("artwork.generatedArtwork")}:</h4>
                 <div className="rounded-lg overflow-hidden border shadow-md mb-2">

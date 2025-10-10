@@ -94,6 +94,11 @@ const Index = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleCollectionSelected = (collectionId: string) => {
+    setSelectedCollectionId(collectionId);
+    setActiveTab("photos"); // Set photos as default tab when selecting a collection
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20">
       {/* Header */}
@@ -170,7 +175,7 @@ const Index = () => {
             <div className="lg:col-span-1">
               <Card className="shadow-soft">
                 <CardContent className="p-6">
-                  <CollectionManager selectedCollectionId={selectedCollectionId} onSelectCollection={setSelectedCollectionId} />
+                  <CollectionManager selectedCollectionId={selectedCollectionId} onSelectCollection={handleCollectionSelected} />
                 </CardContent>
               </Card>
             </div>
@@ -178,7 +183,7 @@ const Index = () => {
             {/* Main Content Area */}
             <div className="lg:col-span-3">
               {selectedCollectionId ? (
-                <Tabs defaultValue="upload" className="max-w-6xl mx-auto">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-6xl mx-auto">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="upload">{t("tabs.upload")}</TabsTrigger>
                     <TabsTrigger value="photos">{t("tabs.photos")}</TabsTrigger>

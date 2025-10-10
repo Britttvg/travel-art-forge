@@ -126,7 +126,7 @@ ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
         collection_id: collectionId,
         artwork_url: artworkUrl,
         style_settings: { prompt, artStyle, photoCount: photoUrls.length },
-        prompt_used: fullPrompt
+        prompt_used: null // Do not store the prompt text
       })
       .select()
       .single();
