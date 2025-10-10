@@ -181,8 +181,20 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
               </div>
 
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-2">Artwork URL:</h4>
-                <p className="text-sm leading-relaxed bg-gradient-accent p-4 rounded-lg border">{artwork.artwork_url}</p>
+                <h4 className="font-medium text-sm text-muted-foreground mb-2">Generated Artwork:</h4>
+                <div className="rounded-lg overflow-hidden border shadow-md mb-2">
+                  <img 
+                    src={artwork.artwork_url} 
+                    alt="Generated AI artwork"
+                    className="w-full h-auto"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/placeholder.svg";
+                      target.alt = "Image not available";
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground break-all">{artwork.artwork_url}</p>
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
