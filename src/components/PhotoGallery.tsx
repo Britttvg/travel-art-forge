@@ -202,7 +202,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   return (
     <div className="space-y-4">
       {selectedPhotos.size === 0 && (
-        <div className="text-center py-4">
+        <div className="text-center">
           <p className="text-muted-foreground">{t("photos.selectToStart")}</p>
         </div>
       )}

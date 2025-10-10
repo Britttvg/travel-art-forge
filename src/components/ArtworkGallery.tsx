@@ -169,7 +169,6 @@ export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<Artwor
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-2">{t("artwork.generatedArtwork")}:</h4>
                 <div className="rounded-lg overflow-hidden border shadow-md mb-2">
                   <img
                     src={artwork.artwork_url}
