@@ -201,6 +201,12 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
 
   return (
     <div className="space-y-4">
+      {selectedPhotos.size === 0 && (
+        <div className="text-center py-4">
+          <p className="text-muted-foreground">{t("photos.selectToStart")}</p>
+        </div>
+      )}
+
       {selectedPhotos.size > 0 && (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b pb-4">
           <div className="flex items-center justify-between">
@@ -208,11 +214,16 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
               {selectedPhotos.size} {t(selectedPhotos.size > 1 ? "photos.photosSelected" : "photos.photoSelected")}
             </p>
             <div className="flex gap-2">
+              {selectedPhotos.size >= 2 && (
+                <Button onClick={() => setDialogOpen(true)} className="bg-gradient-primary hover:opacity-90">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {t("artwork.generate")}
+                </Button>
+              )}
               <ConfirmDeleteDialog
                 trigger={
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {t("photos.deleteSelected")}
+                  <Button variant="destructive">
+                    <Trash2 />
                   </Button>
                 }
                 title={t("photos.deleteConfirmTitle")}
@@ -221,12 +232,6 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
                 isDeleting={deleting}
                 itemCount={selectedPhotos.size}
               />
-              {selectedPhotos.size >= 2 && (
-                <Button onClick={() => setDialogOpen(true)} className="bg-gradient-primary hover:opacity-90">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {t("artwork.generate")}
-                </Button>
-              )}
             </div>
           </div>
         </div>
