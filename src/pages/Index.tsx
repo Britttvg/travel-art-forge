@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import ThemeToggle from "../components/ThemeToggle";
+import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../components/LanguageProvider";
 import { Camera, Sparkles, Palette, User as UserIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -57,8 +60,8 @@ const Index = () => {
     } else {
       console.log("Sign in success:", data);
       toast({
-        title: "Logged in!",
-        description: "You have successfully signed in.",
+        title: t("auth.loggedIn"),
+        description: t("auth.loggedInDesc"),
       });
       // Don't manually set user/session - the auth state listener will handle it
     }
@@ -92,31 +95,32 @@ const Index = () => {
                 <Palette className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Travel Art Studio</h1>
-                <p className="text-sm text-muted-foreground">Transform travel photos into AI artwork</p>
+                <h1 className="text-xl font-bold">{t("app.title")}</h1>
+                <p className="text-sm text-muted-foreground">{t("app.subtitle")}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">Welcome, {user.email}</span>
+                  <span className="text-sm text-muted-foreground">{t("auth.welcome").replace("{email}", user.email!)}</span>
                   <Button onClick={() => supabase.auth.signOut()} variant="outline" size="sm">
-                    Sign Out
+                    {t("auth.signOut")}
                   </Button>
                 </div>
               ) : (
                 <>
-                  <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
-                  <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
+                  <input type="email" placeholder={t("auth.email")} value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
+                  <input type="password" placeholder={t("auth.password")} value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
                   <Button onClick={signIn} disabled={loading} className="bg-gradient-primary hover:opacity-90">
                     <UserIcon className="mr-2 h-4 w-4" />
-                    Sign In
+                    {t("auth.signIn")}
                   </Button>
                 </>
               )}
               {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-              {/* Theme toggle in header */}
-              <div className="ml-4">
+              {/* Language and Theme toggles in header */}
+              <div className="ml-4 flex gap-2">
+                <LanguageToggle />
                 <ThemeToggle />
               </div>
             </div>
@@ -128,20 +132,20 @@ const Index = () => {
       <section className="py-8 text-center">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-6xl font-bold mb-7 bg-gradient-primary bg-clip-text text-transparent pb-3">Turn Your Travel Photos Into Stunning Art</h2>
-            <p className="text-xl text-muted-foreground mb-8">Upload your travel photos and let AI transform them into beautiful artworks</p>
+            <h2 className="text-3xl md:text-6xl font-bold mb-7 bg-gradient-primary bg-clip-text text-transparent pb-3">{t("hero.title")}</h2>
+            <p className="text-xl text-muted-foreground mb-8">{t("hero.subtitle")}</p>
             <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <Camera className="h-5 w-5" />
-                <span>Upload Photos</span>
+                <span>{t("hero.upload")}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Sparkles className="h-5 w-5" />
-                <span>AI Generation</span>
+                <span>{t("hero.generation")}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Palette className="h-5 w-5" />
-                <span>Artistic Results</span>
+                <span>{t("hero.results")}</span>
               </div>
             </div>
           </div>
@@ -163,48 +167,32 @@ const Index = () => {
           {/* Main Content Area */}
           <div className="lg:col-span-3">
             {selectedCollectionId ? (
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <Tabs defaultValue="upload" className="max-w-6xl mx-auto">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="upload" className="flex items-center space-x-2">
-                    <Sparkles className="h-4 w-4" />
-                    <span>Upload</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="photos" className="flex items-center space-x-2">
-                    <Camera className="h-4 w-4" />
-                    <span>Photos</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="artworks" className="flex items-center space-x-2">
-                    <Palette className="h-4 w-4" />
-                    <span>Artworks</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="photos" className="space-y-6">
-                  <Card className="shadow-soft">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">Photo Gallery</h3>
-                      <PhotoGallery
-                        collectionId={selectedCollectionId}
-                        refreshTrigger={refreshTrigger}
-                        onArtworkGenerated={() => setActiveTab("artworks")}
-                      />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
+                  <TabsTrigger value="upload">{t("tabs.upload")}</TabsTrigger>
+                  <TabsTrigger value="photos">{t("tabs.photos")}</TabsTrigger>
+                  <TabsTrigger value="artworks">{t("tabs.artworks")}</TabsTrigger>
+                </TabsList>{" "}
                 <TabsContent value="upload" className="space-y-6">
                   <Card className="shadow-soft">
                     <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">Upload New Photos</h3>
+                      <h3 className="text-lg font-semibold mb-4">{t("photos.upload.title")}</h3>
                       <PhotoUpload collectionId={selectedCollectionId} onPhotoUploaded={handlePhotoUploaded} />
                     </CardContent>
                   </Card>
                 </TabsContent>
-
+                <TabsContent value="photos" className="space-y-6">
+                  <Card className="shadow-soft">
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold mb-4">{t("photos.title")}</h3>
+                      <PhotoGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} onArtworkGenerated={() => setActiveTab("artworks")} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
                 <TabsContent value="artworks" className="space-y-6">
                   <Card className="shadow-soft">
                     <CardContent className="p-6">
-                      <ArtworkGallery refreshTrigger={refreshTrigger} />
+                      <ArtworkGallery collectionId={selectedCollectionId} refreshTrigger={refreshTrigger} />
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -213,9 +201,9 @@ const Index = () => {
               <Card className="shadow-soft">
                 <CardContent className="p-12 text-center">
                   <Palette className="mx-auto h-16 w-16 text-muted-foreground mb-6 animate-float" />
-                  <h3 className="text-2xl font-bold mb-4">Welcome to Travel Art Studio</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">Create your first photo collection to start transforming your travel memories into beautiful AI-generated artwork descriptions.</p>
-                  <p className="text-sm text-muted-foreground">Select or create a collection from the sidebar to get started.</p>
+                  <h3 className="text-2xl font-bold mb-4">{t("welcome.title")}</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t("welcome.subtitle")}</p>
+                  <p className="text-sm text-muted-foreground">{t("welcome.getStarted")}</p>
                 </CardContent>
               </Card>
             )}

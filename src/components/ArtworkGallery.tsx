@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface GeneratedArtwork {
   id: string;
@@ -20,14 +21,16 @@ interface GeneratedArtwork {
 
 interface ArtworkGalleryProps {
   refreshTrigger: number;
+  collectionId?: string;
 }
 
-export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>) {
+export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<ArtworkGalleryProps>) {
   const [artworks, setArtworks] = useState<GeneratedArtwork[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { toast } = useToast();
   const [deleting, setDeleting] = useState(false);
+  const { t } = useLanguage();
 
   const handleDelete = async (id: string) => {
     setDeleting(true);
@@ -35,15 +38,15 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
       const { error } = await supabase.from("generated_artworks").delete().eq("id", id);
       if (error) throw error;
       toast({
-        title: "Artwork deleted",
-        description: "The artwork was deleted successfully.",
+        title: t("artwork.deleted"),
+        description: t("artwork.deletedSuccessfully"),
       });
       // Remove from local state
       setArtworks((prev) => prev.filter((a) => a.id !== id));
     } catch (error) {
       toast({
-        title: "Failed to delete",
-        description: "Please try again.",
+        title: t("artwork.errors.deleteFailed"),
+        description: t("common.tryAgain"),
         variant: "destructive",
       });
     } finally {
@@ -53,7 +56,7 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
 
   useEffect(() => {
     fetchArtworks();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, collectionId]);
 
   const fetchArtworks = async () => {
     try {
@@ -62,15 +65,21 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase.from("generated_artworks").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      let query = supabase.from("generated_artworks").select("*").eq("user_id", user.id);
+
+      if (collectionId) {
+        query = query.eq("collection_id", collectionId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       setArtworks(data || []);
     } catch (error) {
       console.error("Error fetching artworks:", error);
       toast({
-        title: "Failed to load artworks",
-        description: "Please try refreshing the page",
+        title: t("artwork.errors.loadFailed"),
+        description: t("common.refreshPage"),
         variant: "destructive",
       });
     } finally {
@@ -84,13 +93,13 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
       toast({
-        title: "Copied to clipboard",
-        description: "Artwork description copied successfully",
+        title: t("common.copiedToClipboard"),
+        description: t("artwork.copiedDescription"),
       });
     } catch (error) {
       toast({
-        title: "Failed to copy",
-        description: "Please try selecting and copying manually",
+        title: t("common.errors.copyFailed"),
+        description: t("common.errors.copyManually"),
         variant: "destructive",
       });
     }
@@ -121,8 +130,8 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
     return (
       <div className="text-center py-12">
         <Palette className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No artworks generated yet</h3>
-        <p className="text-muted-foreground">Generate some artwork descriptions from your photos to see them here</p>
+        <h3 className="text-lg font-semibold mb-2">{t("artwork.noArtworks")}</h3>
+        <p className="text-muted-foreground">{t("artwork.generateToSee")}</p>
       </div>
     );
   }
@@ -130,9 +139,9 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Generated Artworks</h2>
+        <h2 className="text-xl font-bold">{t("artwork.generatedArtworks")}</h2>
         <Badge variant="secondary" className="text-xs">
-          {artworks.length} artwork{artworks.length !== 1 ? "s" : ""}
+          {artworks.length} {t(artworks.length !== 1 ? "artwork.artworks" : "artwork.artwork")}
         </Badge>
       </div>
 
@@ -141,10 +150,10 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
           <Card key={artwork.id} className="shadow-soft hover:shadow-elegant transition-all duration-300">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">AI-Generated Artwork Description</CardTitle>
+                <CardTitle className="text-lg">{t("artwork.aiGeneratedTitle")}</CardTitle>
                 <div className="flex items-center gap-2">
                   <Badge variant={artwork.is_favorite ? "default" : "secondary"} className="text-xs">
-                    {artwork.is_favorite ? "Favorite" : "Standard"}
+                    {artwork.is_favorite ? t("artwork.favorite") : t("artwork.standard")}
                   </Badge>
                   <Button size="sm" variant="outline" onClick={() => copyToClipboard(artwork.prompt_used || "", artwork.id)} className="h-8 w-8 p-0" aria-label="Copy">
                     {copiedId === artwork.id ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
@@ -155,8 +164,8 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     }
-                    title="Delete Artwork?"
-                    description="Are you sure you want to delete this artwork? This action cannot be undone."
+                    title={t("artwork.deleteConfirmTitle")}
+                    description={`${t("artwork.deleteConfirmDescription")} ${t("common.undoWarning")}`}
                     onConfirm={() => handleDelete(artwork.id)}
                     isDeleting={deleting}
                   />
@@ -165,12 +174,12 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-2">Prompt Used:</h4>
-                <p className="text-sm bg-muted p-3 rounded-lg italic">"{artwork.prompt_used || "No prompt available"}"</p>
+                <h4 className="font-medium text-sm text-muted-foreground mb-2">{t("artwork.promptUsed")}:</h4>
+                <p className="text-sm bg-muted p-3 rounded-lg italic">"{artwork.prompt_used || t("artwork.noPromptAvailable")}"</p>
               </div>
 
               <div>
-                <h4 className="font-medium text-sm text-muted-foreground mb-2">Generated Artwork:</h4>
+                <h4 className="font-medium text-sm text-muted-foreground mb-2">{t("artwork.generatedArtwork")}:</h4>
                 <div className="rounded-lg overflow-hidden border shadow-md mb-2">
                   <img
                     src={artwork.artwork_url}
@@ -187,7 +196,9 @@ export function ArtworkGallery({ refreshTrigger }: Readonly<ArtworkGalleryProps>
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                <span>Created on {new Date(artwork.created_at).toLocaleString()}</span>
+                <span>
+                  {t("artwork.createdOn")} {new Date(artwork.created_at).toLocaleString()}
+                </span>
               </div>
             </CardContent>
           </Card>

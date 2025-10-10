@@ -1,0 +1,501 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+export type Language = "nl" | "en";
+
+interface LanguageContextProps {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  t: (key: string) => string;
+}
+
+const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error("useLanguage must be used within LanguageProvider");
+  return context;
+};
+
+const translations = {
+  nl: {
+    // Header
+    "app.title": "Travel Art Studio",
+    "app.subtitle": "Transformeer reisfoto's naar AI kunst",
+    "auth.welcome": "Welkom, {email}",
+    "auth.signOut": "Uitloggen",
+    "auth.email": "E-mail",
+    "auth.password": "Wachtwoord",
+    "auth.signIn": "Inloggen",
+    "auth.loggedIn": "Ingelogd!",
+    "auth.loggedInDesc": "Je bent succesvol ingelogd.",
+
+    // Hero Section
+    "hero.title": "Verander Je Reisfoto's in Prachtige Kunst",
+    "hero.subtitle": "Upload je reisfoto's en laat AI ze transformeren naar mooie kunstwerken",
+    "hero.upload": "Upload Foto's",
+    "hero.generation": "AI Generatie",
+    "hero.results": "Artistieke Resultaten",
+
+    // Collections
+    "collections.title": "Foto Collecties",
+    "collections.new": "Nieuwe Collectie",
+    "collections.none": "Nog geen collecties",
+    "collections.noneDesc": "Maak je eerste fotocollectie om te beginnen",
+    "collections.create": "Nieuwe Collectie Maken",
+    "collections.name": "Collectie Naam",
+    "collections.namePlaceholder": "Mijn Reisfoto's",
+    "collections.description": "Beschrijving (Optioneel)",
+    "collections.descPlaceholder": "Foto's van mijn reis naar...",
+    "collections.creating": "Maken...",
+    "collections.created": "Collectie gemaakt",
+    "collections.createdDesc": '"{name}" is succesvol gemaakt',
+    "collections.photos": "foto's",
+    "collections.created_on": "Gemaakt op {date}",
+    "collections.photoCollections": "Foto Collecties",
+    "collections.newCollection": "Nieuwe Collectie",
+    "collections.createNew": "Nieuwe Collectie Maken",
+    "collections.collectionName": "Collectie Naam",
+    "collections.descriptionOptional": "Beschrijving (Optioneel)",
+    "collections.descriptionPlaceholder": "Foto's van mijn reis naar...",
+    "collections.createCollection": "Collectie Maken",
+    "collections.createdSuccessfully": "is succesvol gemaakt",
+    "collections.noCollections": "Nog geen collecties",
+    "collections.createFirstCollection": "Maak je eerste fotocollectie om te beginnen",
+    "collections.errors.loadFailed": "Collecties laden mislukt",
+    "collections.errors.nameRequired": "Collectie naam vereist",
+    "collections.errors.enterName": "Voer een naam in voor je collectie",
+    "collections.errors.createFailed": "Collectie maken mislukt",
+
+    // Photo Upload
+    "upload.title": "Nieuwe Foto's Uploaden",
+    "upload.dragdrop": "Sleep je reisfoto's hierheen of klik om bestanden te selecteren",
+    "upload.formats": "Ondersteunt JPEG, PNG, WebP (max 20MB elk)",
+    "upload.selected": "Geselecteerde Foto's ({count})",
+    "upload.uploading": "Uploaden...",
+    "upload.upload": "Upload {count} Foto{plural}",
+    "upload.success": "Foto's succesvol geüpload",
+    "upload.successDesc": "{count} foto's geüpload naar je collectie",
+    "upload.failed": "Upload mislukt",
+    "upload.failedDesc": "Probeer het later opnieuw",
+    "upload.authRequired": "Authenticatie vereist",
+    "upload.authRequiredDesc": "Log in om foto's te uploaden",
+
+    // Auth
+    "auth.required": "Authenticatie vereist",
+    "auth.signInToUpload": "Log in om foto's te uploaden",
+    "auth.signInToGenerate": "Log in om kunstwerk te genereren",
+    "auth.signInToCreateCollections": "Log in om collecties te maken",
+
+    // Photo Gallery
+    "photos.title": "Foto Galerij",
+    "photos.none": "Nog geen foto's",
+    "photos.noneDesc": "Upload reisfoto's om te beginnen",
+    "photos.selected": "{count} foto{plural} geselecteerd",
+    "photos.delete": "Geselecteerde Verwijderen",
+    "photos.generateArt": "Genereer Kunst",
+    "photos.deleteConfirm": "Foto's Verwijderen?",
+    "photos.deleteDesc": "Weet je zeker dat je {count} foto{plural} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+    "photos.deleted": "Foto's verwijderd",
+    "photos.deletedDesc": "{count} foto{plural} succesvol verwijderd.",
+    "photos.deleteFailed": "Foto's verwijderen mislukt",
+    "photos.deleteFailedDesc": "Probeer het opnieuw.",
+    "photos.noPhotos": "Nog geen foto's",
+    "photos.uploadToStart": "Upload reisfoto's om te beginnen",
+    "photos.photosSelected": "foto's geselecteerd",
+    "photos.photoSelected": "foto geselecteerd",
+    "photos.deleteSelected": "Geselecteerde Verwijderen",
+    "photos.deleteConfirmTitle": "Foto's Verwijderen?",
+    "photos.deleteConfirmDescription": "Weet je zeker dat je wilt verwijderen",
+    "photos.photo": "foto",
+    "photos.photos": "foto's",
+    "photos.deletedSingle": "foto succesvol verwijderd.",
+    "photos.deletedMultiple": "foto's succesvol verwijderd.",
+    "photos.errors.loadFailed": "Foto's laden mislukt",
+    "photos.errors.refreshPage": "Probeer de pagina te vernieuwen",
+    "photos.errors.deleteFailed": "Foto's verwijderen mislukt",
+    "photos.errors.tryAgain": "Probeer het opnieuw.",
+    "photos.errors.uploadFailed": "Upload mislukt",
+    "photos.errors.tryAgainLater": "Probeer het later opnieuw",
+    "photos.uploadedSuccessfully": "Foto's succesvol geüpload",
+    "photos.uploadedToCollection": "foto's geüpload naar je collectie",
+    "photos.upload.title": "Upload Reisfoto's",
+    "photos.upload.description": "Sleep je reisfoto's hierheen of klik om bestanden te selecteren",
+    "photos.upload.formats": "Ondersteunt JPEG, PNG, WebP (max 20MB elk)",
+    "photos.upload.selectedPhotos": "Geselecteerde Foto's",
+    "photos.upload.uploading": "Uploaden...",
+    "photos.upload.upload": "Upload",
+
+    // Artwork Generation
+    "generate.title": "Genereer Kunstwerk van {count} Foto's",
+    "generate.subtitle": "Combineer je geselecteerde foto's in een prachtig AI-gegenereerd kunstwerk",
+    "generate.style": "Kunststijl",
+    "generate.details": "Extra Details",
+    "generate.detailsPlaceholder": "Voeg specifieke details toe over sfeer, kleuren, compositie...",
+    "generate.generating": "Kunstwerk Genereren...",
+    "generate.generate": "Genereer Kunstwerk",
+    "generate.success": "Kunstwerk succesvol gegenereerd!",
+    "generate.successDesc": "Je AI-gegenereerd kunstwerk is gemaakt",
+    "generate.failed": "Genereren mislukt",
+    "generate.failedDesc": "Kunstwerk genereren mislukt. Probeer het opnieuw.",
+    "generate.missingInfo": "Ontbrekende informatie",
+    "generate.missingInfoDesc": "Selecteer minimaal 2 foto's en voer een prompt in",
+
+    // Artwork
+    "artwork.generate": "Genereer Kunst",
+    "artwork.dialogTitle": "Genereer Kunstwerk van",
+    "artwork.dialogDescription": "Combineer je geselecteerde foto's in een prachtig AI-gegenereerd kunstwerk",
+    "artwork.style": "Kunststijl",
+    "artwork.additionalDetails": "Extra Details",
+    "artwork.promptPlaceholder": "Voeg specifieke details toe over sfeer, kleuren, compositie...",
+    "artwork.generating": "Kunstwerk Genereren...",
+    "artwork.success.title": "Kunstwerk succesvol gegenereerd!",
+    "artwork.success.description": "Je AI-gegenereerd kunstwerk is gemaakt",
+    "artwork.errors.generationFailed": "Genereren mislukt",
+    "artwork.errors.tryAgain": "Kunstwerk genereren mislukt. Probeer het opnieuw.",
+    "artwork.errors.missingInfo": "Ontbrekende informatie",
+    "artwork.errors.selectPhotosPrompt": "Selecteer minimaal 2 foto's en voer een prompt in",
+    "artwork.styles.impressionist": "Impressionistisch Schilderij",
+    "artwork.styles.watercolor": "Aquarel",
+    "artwork.styles.oilPainting": "Olieverf Schilderij",
+    "artwork.styles.digitalArt": "Digitale Kunst",
+    "artwork.styles.abstract": "Abstract",
+    "artwork.styles.photorealistic": "Fotorealistisch",
+    "artwork.styles.anime": "Anime Stijl",
+    "artwork.noArtworks": "Nog geen kunstwerken gegenereerd",
+    "artwork.generateToSee": "Genereer kunstwerkbeschrijvingen van je foto's om ze hier te zien",
+    "artwork.generatedArtworks": "Gegenereerde Kunstwerken",
+    "artwork.artwork": "kunstwerk",
+    "artwork.artworks": "kunstwerken",
+    "artwork.aiGeneratedTitle": "AI-Gegenereerd Kunstwerk Beschrijving",
+    "artwork.favorite": "Favoriet",
+    "artwork.standard": "Standaard",
+    "artwork.deleteConfirmTitle": "Kunstwerk Verwijderen?",
+    "artwork.deleteConfirmDescription": "Weet je zeker dat je dit kunstwerk wilt verwijderen?",
+    "artwork.deleted": "Kunstwerk verwijderd",
+    "artwork.deletedSuccessfully": "Het kunstwerk is succesvol verwijderd.",
+    "artwork.errors.deleteFailed": "Verwijderen mislukt",
+    "artwork.errors.loadFailed": "Kunstwerken laden mislukt",
+    "artwork.copiedDescription": "Kunstwerk beschrijving succesvol gekopieerd",
+    "artwork.promptUsed": "Gebruikte Prompt",
+    "artwork.generatedArtwork": "Gegenereerd Kunstwerk",
+    "artwork.noPromptAvailable": "Geen prompt beschikbaar",
+    "artwork.createdOn": "Gemaakt op",
+
+    // Art Styles
+    "style.impressionist": "Impressionistisch Schilderij",
+    "style.watercolor": "Aquarel",
+    "style.oilPainting": "Olieverf Schilderij",
+    "style.digitalArt": "Digitale Kunst",
+    "style.abstract": "Abstract",
+    "style.photorealistic": "Fotorealistisch",
+    "style.anime": "Anime Stijl",
+
+    // Artwork Gallery
+    "artworks.title": "Gegenereerde Kunstwerken",
+    "artworks.none": "Nog geen kunstwerken gegenereerd",
+    "artworks.noneDesc": "Genereer kunstwerkbeschrijvingen van je foto's om ze hier te zien",
+    "artworks.artwork": "kunstwerk",
+    "artworks.artworks": "kunstwerken",
+    "artworks.aiGenerated": "AI-Gegenereerd Kunstwerk Beschrijving",
+    "artworks.favorite": "Favoriet",
+    "artworks.standard": "Standaard",
+    "artworks.promptUsed": "Gebruikte Prompt:",
+    "artworks.generatedArtwork": "Gegenereerd Kunstwerk:",
+    "artworks.noPrompt": "Geen prompt beschikbaar",
+    "artworks.createdOn": "Gemaakt op {date}",
+    "artworks.copy": "Kopiëren",
+    "artworks.delete": "Verwijderen",
+    "artworks.deleteConfirm": "Kunstwerk Verwijderen?",
+    "artworks.deleteDesc": "Weet je zeker dat je dit kunstwerk wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+    "artworks.deleted": "Kunstwerk verwijderd",
+    "artworks.deletedDesc": "Het kunstwerk is succesvol verwijderd.",
+    "artworks.deleteFailed": "Verwijderen mislukt",
+    "artworks.deleteFailedDesc": "Probeer het opnieuw.",
+    "artworks.copied": "Gekopieerd naar klembord",
+    "artworks.copiedDesc": "Kunstwerk beschrijving succesvol gekopieerd",
+    "artworks.copyFailed": "Kopiëren mislukt",
+    "artworks.copyFailedDesc": "Probeer handmatig selecteren en kopiëren",
+
+    // Welcome
+    "welcome.title": "Welkom bij Travel Art Studio",
+    "welcome.subtitle": "Maak je eerste fotocollectie om je reisgherinneringen te transformeren naar prachtige AI-gegenereerde kunstwerkbeschrijvingen.",
+    "welcome.getStarted": "Selecteer of maak een collectie in de zijbalk om te beginnen.",
+
+    // Tabs
+    "tabs.upload": "Uploaden",
+    "tabs.photos": "Foto's",
+    "tabs.artworks": "Kunstwerken",
+
+    // Common
+    "common.cancel": "Annuleren",
+    "common.delete": "Verwijderen",
+    "common.deleting": "Verwijderen...",
+    "common.loading": "Laden...",
+    "common.create": "Maken",
+    "common.save": "Opslaan",
+    "common.close": "Sluiten",
+    "common.copy": "Kopiëren",
+    "common.imageNotAvailable": "Afbeelding niet beschikbaar",
+    "common.refreshPage": "Probeer de pagina te vernieuwen",
+    "common.tryAgain": "Probeer het opnieuw",
+    "common.tryAgainLater": "Probeer het later opnieuw",
+    "common.undoWarning": "Deze actie kan niet ongedaan worden gemaakt.",
+    "common.copiedToClipboard": "Gekopieerd naar klembord",
+    "common.errors.copyFailed": "Kopiëren mislukt",
+    "common.errors.copyManually": "Probeer handmatig selecteren en kopiëren",
+  },
+  en: {
+    // Header
+    "app.title": "Travel Art Studio",
+    "app.subtitle": "Transform travel photos into AI artwork",
+    "auth.welcome": "Welcome, {email}",
+    "auth.signOut": "Sign Out",
+    "auth.email": "Email",
+    "auth.password": "Password",
+    "auth.signIn": "Sign In",
+    "auth.loggedIn": "Logged in!",
+    "auth.loggedInDesc": "You have successfully signed in.",
+
+    // Hero Section
+    "hero.title": "Turn Your Travel Photos Into Stunning Art",
+    "hero.subtitle": "Upload your travel photos and let AI transform them into beautiful artworks",
+    "hero.upload": "Upload Photos",
+    "hero.generation": "AI Generation",
+    "hero.results": "Artistic Results",
+
+    // Collections
+    "collections.title": "Photo Collections",
+    "collections.new": "New Collection",
+    "collections.none": "No collections yet",
+    "collections.noneDesc": "Create your first photo collection to get started",
+    "collections.create": "Create New Collection",
+    "collections.name": "Collection Name",
+    "collections.namePlaceholder": "My Travel Photos",
+    "collections.description": "Description (Optional)",
+    "collections.descPlaceholder": "Photos from my trip to...",
+    "collections.creating": "Creating...",
+    "collections.created": "Collection created",
+    "collections.createdDesc": '"{name}" has been created successfully',
+    "collections.photos": "photos",
+    "collections.created_on": "Created {date}",
+    "collections.photoCollections": "Photo Collections",
+    "collections.newCollection": "New Collection",
+    "collections.createNew": "Create New Collection",
+    "collections.collectionName": "Collection Name",
+    "collections.descriptionOptional": "Description (Optional)",
+    "collections.descriptionPlaceholder": "Photos from my trip to...",
+    "collections.createCollection": "Create Collection",
+    "collections.createdSuccessfully": "has been created successfully",
+    "collections.noCollections": "No collections yet",
+    "collections.createFirstCollection": "Create your first photo collection to get started",
+    "collections.errors.loadFailed": "Failed to load collections",
+    "collections.errors.nameRequired": "Collection name required",
+    "collections.errors.enterName": "Please enter a name for your collection",
+    "collections.errors.createFailed": "Failed to create collection",
+
+    // Photo Upload
+    "upload.title": "Upload New Photos",
+    "upload.dragdrop": "Drag & drop your travel photos here, or click to select files",
+    "upload.formats": "Supports JPEG, PNG, WebP (max 20MB each)",
+    "upload.selected": "Selected Photos ({count})",
+    "upload.uploading": "Uploading...",
+    "upload.upload": "Upload {count} Photo{plural}",
+    "upload.success": "Photos uploaded successfully",
+    "upload.successDesc": "{count} photos uploaded to your collection",
+    "upload.failed": "Upload failed",
+    "upload.failedDesc": "Please try again later",
+    "upload.authRequired": "Authentication required",
+    "upload.authRequiredDesc": "Please sign in to upload photos",
+
+    // Auth
+    "auth.required": "Authentication required",
+    "auth.signInToUpload": "Please sign in to upload photos",
+    "auth.signInToGenerate": "Please sign in to generate artwork",
+    "auth.signInToCreateCollections": "Please sign in to create collections",
+
+    // Photo Gallery
+    "photos.title": "Photo Gallery",
+    "photos.none": "No photos yet",
+    "photos.noneDesc": "Upload some travel photos to get started",
+    "photos.selected": "{count} photo{plural} selected",
+    "photos.delete": "Delete Selected",
+    "photos.generateArt": "Generate Art",
+    "photos.deleteConfirm": "Delete Photos?",
+    "photos.deleteDesc": "Are you sure you want to delete {count} photo{plural}? This action cannot be undone.",
+    "photos.deleted": "Photos deleted",
+    "photos.deletedDesc": "{count} photo{plural} deleted successfully.",
+    "photos.deleteFailed": "Failed to delete photos",
+    "photos.deleteFailedDesc": "Please try again.",
+    "photos.noPhotos": "No photos yet",
+    "photos.uploadToStart": "Upload some travel photos to get started",
+    "photos.photosSelected": "photos selected",
+    "photos.photoSelected": "photo selected",
+    "photos.deleteSelected": "Delete Selected",
+    "photos.deleteConfirmTitle": "Delete Photos?",
+    "photos.deleteConfirmDescription": "Are you sure you want to delete",
+    "photos.photo": "photo",
+    "photos.photos": "photos",
+    "photos.deletedSingle": "photo deleted successfully.",
+    "photos.deletedMultiple": "photos deleted successfully.",
+    "photos.errors.loadFailed": "Failed to load photos",
+    "photos.errors.refreshPage": "Please try refreshing the page",
+    "photos.errors.deleteFailed": "Failed to delete photos",
+    "photos.errors.tryAgain": "Please try again.",
+    "photos.errors.uploadFailed": "Upload failed",
+    "photos.errors.tryAgainLater": "Please try again later",
+    "photos.uploadedSuccessfully": "Photos uploaded successfully",
+    "photos.uploadedToCollection": "photos uploaded to your collection",
+    "photos.upload.title": "Upload Travel Photos",
+    "photos.upload.description": "Drag & drop your travel photos here, or click to select files",
+    "photos.upload.formats": "Supports JPEG, PNG, WebP (max 20MB each)",
+    "photos.upload.selectedPhotos": "Selected Photos",
+    "photos.upload.uploading": "Uploading...",
+    "photos.upload.upload": "Upload",
+
+    // Artwork Generation
+    "generate.title": "Generate Artwork from {count} Photos",
+    "generate.subtitle": "Combine your selected photos into a beautiful AI-generated artwork",
+    "generate.style": "Art Style",
+    "generate.details": "Additional Details",
+    "generate.detailsPlaceholder": "Add any specific details about mood, colors, composition...",
+    "generate.generating": "Generating Artwork...",
+    "generate.generate": "Generate Artwork",
+    "generate.success": "Artwork generated successfully!",
+    "generate.successDesc": "Your AI-generated artwork has been created",
+    "generate.failed": "Generation failed",
+    "generate.failedDesc": "Failed to generate artwork. Please try again.",
+    "generate.missingInfo": "Missing information",
+    "generate.missingInfoDesc": "Please select at least 2 photos and enter a prompt",
+
+    // Artwork
+    "artwork.generate": "Generate Art",
+    "artwork.dialogTitle": "Generate Artwork from",
+    "artwork.dialogDescription": "Combine your selected photos into a beautiful AI-generated artwork",
+    "artwork.style": "Art Style",
+    "artwork.additionalDetails": "Additional Details",
+    "artwork.promptPlaceholder": "Add any specific details about mood, colors, composition...",
+    "artwork.generating": "Generating Artwork...",
+    "artwork.success.title": "Artwork generated successfully!",
+    "artwork.success.description": "Your AI-generated artwork has been created",
+    "artwork.errors.generationFailed": "Generation failed",
+    "artwork.errors.tryAgain": "Failed to generate artwork. Please try again.",
+    "artwork.errors.missingInfo": "Missing information",
+    "artwork.errors.selectPhotosPrompt": "Please select at least 2 photos and enter a prompt",
+    "artwork.styles.impressionist": "Impressionist Painting",
+    "artwork.styles.watercolor": "Watercolor",
+    "artwork.styles.oilPainting": "Oil Painting",
+    "artwork.styles.digitalArt": "Digital Art",
+    "artwork.styles.abstract": "Abstract",
+    "artwork.styles.photorealistic": "Photorealistic",
+    "artwork.styles.anime": "Anime Style",
+    "artwork.noArtworks": "No artworks generated yet",
+    "artwork.generateToSee": "Generate some artwork descriptions from your photos to see them here",
+    "artwork.generatedArtworks": "Generated Artworks",
+    "artwork.artwork": "artwork",
+    "artwork.artworks": "artworks",
+    "artwork.aiGeneratedTitle": "AI-Generated Artwork Description",
+    "artwork.favorite": "Favorite",
+    "artwork.standard": "Standard",
+    "artwork.deleteConfirmTitle": "Delete Artwork?",
+    "artwork.deleteConfirmDescription": "Are you sure you want to delete this artwork?",
+    "artwork.deleted": "Artwork deleted",
+    "artwork.deletedSuccessfully": "The artwork was deleted successfully.",
+    "artwork.errors.deleteFailed": "Failed to delete",
+    "artwork.errors.loadFailed": "Failed to load artworks",
+    "artwork.copiedDescription": "Artwork description copied successfully",
+    "artwork.promptUsed": "Prompt Used",
+    "artwork.generatedArtwork": "Generated Artwork",
+    "artwork.noPromptAvailable": "No prompt available",
+    "artwork.createdOn": "Created on",
+
+    // Art Styles
+    "style.impressionist": "Impressionist Painting",
+    "style.watercolor": "Watercolor",
+    "style.oilPainting": "Oil Painting",
+    "style.digitalArt": "Digital Art",
+    "style.abstract": "Abstract",
+    "style.photorealistic": "Photorealistic",
+    "style.anime": "Anime Style",
+
+    // Artwork Gallery
+    "artworks.title": "Generated Artworks",
+    "artworks.none": "No artworks generated yet",
+    "artworks.noneDesc": "Generate some artwork descriptions from your photos to see them here",
+    "artworks.artwork": "artwork",
+    "artworks.artworks": "artworks",
+    "artworks.aiGenerated": "AI-Generated Artwork Description",
+    "artworks.favorite": "Favorite",
+    "artworks.standard": "Standard",
+    "artworks.promptUsed": "Prompt Used:",
+    "artworks.generatedArtwork": "Generated Artwork:",
+    "artworks.noPrompt": "No prompt available",
+    "artworks.createdOn": "Created on {date}",
+    "artworks.copy": "Copy",
+    "artworks.delete": "Delete",
+    "artworks.deleteConfirm": "Delete Artwork?",
+    "artworks.deleteDesc": "Are you sure you want to delete this artwork? This action cannot be undone.",
+    "artworks.deleted": "Artwork deleted",
+    "artworks.deletedDesc": "The artwork was deleted successfully.",
+    "artworks.deleteFailed": "Failed to delete",
+    "artworks.deleteFailedDesc": "Please try again.",
+    "artworks.copied": "Copied to clipboard",
+    "artworks.copiedDesc": "Artwork description copied successfully",
+    "artworks.copyFailed": "Failed to copy",
+    "artworks.copyFailedDesc": "Please try selecting and copying manually",
+
+    // Welcome
+    "welcome.title": "Welcome to Travel Art Studio",
+    "welcome.subtitle": "Create your first photo collection to start transforming your travel memories into beautiful AI-generated artwork descriptions.",
+    "welcome.getStarted": "Select or create a collection from the sidebar to get started.",
+
+    // Tabs
+    "tabs.upload": "Upload",
+    "tabs.photos": "Photos",
+    "tabs.artworks": "Artworks",
+
+    // Common
+    "common.cancel": "Cancel",
+    "common.delete": "Delete",
+    "common.deleting": "Deleting...",
+    "common.loading": "Loading...",
+    "common.create": "Create",
+    "common.save": "Save",
+    "common.close": "Close",
+    "common.copy": "Copy",
+    "common.imageNotAvailable": "Image not available",
+    "common.refreshPage": "Please try refreshing the page",
+    "common.tryAgain": "Please try again",
+    "common.tryAgainLater": "Please try again later",
+    "common.undoWarning": "This action cannot be undone.",
+    "common.copiedToClipboard": "Copied to clipboard",
+    "common.errors.copyFailed": "Failed to copy",
+    "common.errors.copyManually": "Please try selecting and copying manually",
+  },
+};
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguageState] = useState<Language>("nl"); // Default to Dutch
+
+  useEffect(() => {
+    const saved = localStorage.getItem("language") as Language | null;
+    if (saved && (saved === "nl" || saved === "en")) {
+      setLanguageState(saved);
+    }
+  }, []);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem("language", lang);
+  };
+
+  const t = (key: string): string => {
+    const translation = translations[language][key];
+    if (!translation) {
+      console.warn(`Missing translation for key: ${key}`);
+      return key;
+    }
+    return translation;
+  };
+
+  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>;
+};

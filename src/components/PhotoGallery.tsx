@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface Photo {
   id: string;
@@ -32,6 +33,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchPhotos();
@@ -46,8 +48,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
     } catch (error) {
       console.error("Error fetching photos:", error);
       toast({
-        title: "Failed to load photos",
-        description: "Please try refreshing the page",
+        title: t("photos.errors.loadFailed"),
+        description: t("photos.errors.refreshPage"),
         variant: "destructive",
       });
     } finally {
@@ -96,8 +98,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
       if (error) throw error;
 
       toast({
-        title: "Photos deleted",
-        description: `${photoIds.length} photo${photoIds.length > 1 ? "s" : ""} deleted successfully.`,
+        title: t("photos.deleted"),
+        description: `${photoIds.length} ${t(photoIds.length > 1 ? "photos.deletedMultiple" : "photos.deletedSingle")}`,
       });
 
       // Remove from local state
@@ -106,8 +108,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
     } catch (error) {
       console.error("Delete error:", error);
       toast({
-        title: "Failed to delete photos",
-        description: "Please try again.",
+        title: t("photos.errors.deleteFailed"),
+        description: t("photos.errors.tryAgain"),
         variant: "destructive",
       });
     } finally {
@@ -118,8 +120,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   const generateArtwork = async () => {
     if (selectedPhotos.size < 2 || !prompt.trim()) {
       toast({
-        title: "Missing information",
-        description: "Please select at least 2 photos and enter a prompt",
+        title: t("artwork.errors.missingInfo"),
+        description: t("artwork.errors.selectPhotosPrompt"),
         variant: "destructive",
       });
       return;
@@ -132,8 +134,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
       } = await supabase.auth.getUser();
       if (!user) {
         toast({
-          title: "Authentication required",
-          description: "Please sign in to generate artwork",
+          title: t("auth.required"),
+          description: t("auth.signInToGenerate"),
           variant: "destructive",
         });
         return;
@@ -154,8 +156,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
       if (error) throw error;
 
       toast({
-        title: "Artwork generated successfully!",
-        description: "Your AI-generated artwork has been created",
+        title: t("artwork.success.title"),
+        description: t("artwork.success.description"),
       });
       setSelectedPhotos(new Set());
       setPrompt("");
@@ -164,8 +166,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
     } catch (error) {
       console.error("Generation error:", error);
       toast({
-        title: "Generation failed",
-        description: "Failed to generate artwork. Please try again.",
+        title: t("artwork.errors.generationFailed"),
+        description: t("artwork.errors.tryAgain"),
         variant: "destructive",
       });
     } finally {
@@ -187,8 +189,8 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
     return (
       <div className="text-center py-12">
         <Palette className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No photos yet</h3>
-        <p className="text-muted-foreground">Upload some travel photos to get started</p>
+        <h3 className="text-lg font-semibold mb-2">{t("photos.noPhotos")}</h3>
+        <p className="text-muted-foreground">{t("photos.uploadToStart")}</p>
       </div>
     );
   }
@@ -199,18 +201,18 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b pb-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {selectedPhotos.size} photo{selectedPhotos.size > 1 ? "s" : ""} selected
+              {selectedPhotos.size} {t(selectedPhotos.size > 1 ? "photos.photosSelected" : "photos.photoSelected")}
             </p>
             <div className="flex gap-2">
               <ConfirmDeleteDialog
                 trigger={
                   <Button variant="destructive" size="sm">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Selected
+                    {t("photos.deleteSelected")}
                   </Button>
                 }
-                title="Delete Photos?"
-                description={`Are you sure you want to delete ${selectedPhotos.size} photo${selectedPhotos.size > 1 ? "s" : ""}? This action cannot be undone.`}
+                title={t("photos.deleteConfirmTitle")}
+                description={`${t("photos.deleteConfirmDescription")} ${selectedPhotos.size} ${t(selectedPhotos.size > 1 ? "photos.photos" : "photos.photo")}? ${t("common.undoWarning")}`}
                 onConfirm={handleDeletePhotos}
                 isDeleting={deleting}
                 itemCount={selectedPhotos.size}
@@ -218,7 +220,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
               {selectedPhotos.size >= 2 && (
                 <Button onClick={() => setDialogOpen(true)} className="bg-gradient-primary hover:opacity-90">
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Generate Art
+                  {t("artwork.generate")}
                 </Button>
               )}
             </div>
@@ -267,8 +269,10 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
       >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Generate Artwork from {selectedPhotos.size} Photos</DialogTitle>
-            <DialogDescription>Combine your selected photos into a beautiful AI-generated artwork</DialogDescription>
+            <DialogTitle>
+              {t("artwork.dialogTitle")} {selectedPhotos.size} {t(selectedPhotos.size > 1 ? "photos.photos" : "photos.photo")}
+            </DialogTitle>
+            <DialogDescription>{t("artwork.dialogDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-2">
@@ -282,29 +286,29 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
             </div>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="style">Art Style</Label>
+                <Label htmlFor="style">{t("artwork.style")}</Label>
                 <Select value={artStyle} onValueChange={setArtStyle}>
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="impressionist">Impressionist Painting</SelectItem>
-                    <SelectItem value="watercolor">Watercolor</SelectItem>
-                    <SelectItem value="oil-painting">Oil Painting</SelectItem>
-                    <SelectItem value="digital-art">Digital Art</SelectItem>
-                    <SelectItem value="abstract">Abstract</SelectItem>
-                    <SelectItem value="photorealistic">Photorealistic</SelectItem>
-                    <SelectItem value="anime">Anime Style</SelectItem>
+                    <SelectItem value="impressionist">{t("artwork.styles.impressionist")}</SelectItem>
+                    <SelectItem value="watercolor">{t("artwork.styles.watercolor")}</SelectItem>
+                    <SelectItem value="oil-painting">{t("artwork.styles.oilPainting")}</SelectItem>
+                    <SelectItem value="digital-art">{t("artwork.styles.digitalArt")}</SelectItem>
+                    <SelectItem value="abstract">{t("artwork.styles.abstract")}</SelectItem>
+                    <SelectItem value="photorealistic">{t("artwork.styles.photorealistic")}</SelectItem>
+                    <SelectItem value="anime">{t("artwork.styles.anime")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="prompt">Additional Details</Label>
-                <Textarea id="prompt" placeholder="Add any specific details about mood, colors, composition..." value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} className="mt-1" />
+                <Label htmlFor="prompt">{t("artwork.additionalDetails")}</Label>
+                <Textarea id="prompt" placeholder={t("artwork.promptPlaceholder")} value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} className="mt-1" />
               </div>
               <Button onClick={generateArtwork} disabled={generating || selectedPhotos.size < 2 || !prompt} className="w-full bg-gradient-primary hover:opacity-90">
                 <Sparkles className="mr-2 h-4 w-4" />
-                {generating ? "Generating Artwork..." : "Generate Artwork"}
+                {generating ? t("artwork.generating") : t("artwork.generate")}
               </Button>
             </div>
           </div>

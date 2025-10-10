@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface Collection {
   id: string;
@@ -31,6 +32,7 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
   const [creating, setCreating] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1400);
   const { toast } = useToast();
+  const { t } = useLanguage();
   useEffect(() => {
     fetchCollections();
   }, []);
@@ -76,8 +78,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
     } catch (error) {
       console.error("Error fetching collections:", error);
       toast({
-        title: "Failed to load collections",
-        description: "Please try refreshing the page",
+        title: t("collections.errors.loadFailed"),
+        description: t("common.refreshPage"),
         variant: "destructive",
       });
     } finally {
@@ -88,8 +90,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
   const createCollection = async () => {
     if (!newCollection.name.trim()) {
       toast({
-        title: "Collection name required",
-        description: "Please enter a name for your collection",
+        title: t("collections.errors.nameRequired"),
+        description: t("collections.errors.enterName"),
         variant: "destructive",
       });
       return;
@@ -102,8 +104,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
       } = await supabase.auth.getUser();
       if (!user) {
         toast({
-          title: "Authentication required",
-          description: "Please sign in to create collections",
+          title: t("auth.required"),
+          description: t("auth.signInToCreateCollections"),
           variant: "destructive",
         });
         return;
@@ -122,8 +124,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
       if (error) throw error;
 
       toast({
-        title: "Collection created",
-        description: `"${newCollection.name}" has been created successfully`,
+        title: t("collections.created"),
+        description: `"${newCollection.name}" ${t("collections.createdSuccessfully")}`,
       });
 
       setNewCollection({ name: "", description: "" });
@@ -137,8 +139,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
     } catch (error) {
       console.error("Error creating collection:", error);
       toast({
-        title: "Failed to create collection",
-        description: "Please try again later",
+        title: t("collections.errors.createFailed"),
+        description: t("common.tryAgainLater"),
         variant: "destructive",
       });
     } finally {
@@ -164,29 +166,29 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Photo Collections</h2>
+        <h2 className="text-xl font-bold">{t("collections.photoCollections")}</h2>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button size={isLargeScreen ? "sm" : "icon"} className={`bg-gradient-primary hover:opacity-90 items-center${isLargeScreen ? "" : " justify-center"}`} aria-label="New Collection">
+            <Button size={isLargeScreen ? "sm" : "icon"} className={`bg-gradient-primary hover:opacity-90 items-center${isLargeScreen ? "" : " justify-center"}`} aria-label={t("collections.newCollection")}>
               <Plus className={isLargeScreen ? "mr-2 h-4 w-4" : "h-5 w-5"} />
-              {isLargeScreen && "New Collection"}
+              {isLargeScreen && t("collections.newCollection")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Collection</DialogTitle>
+              <DialogTitle>{t("collections.createNew")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Collection Name</Label>
-                <Input id="name" placeholder="My Travel Photos" value={newCollection.name} onChange={(e) => setNewCollection((prev) => ({ ...prev, name: e.target.value }))} className="mt-1" />
+                <Label htmlFor="name">{t("collections.collectionName")}</Label>
+                <Input id="name" placeholder={t("collections.namePlaceholder")} value={newCollection.name} onChange={(e) => setNewCollection((prev) => ({ ...prev, name: e.target.value }))} className="mt-1" />
               </div>
               <div>
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea id="description" placeholder="Photos from my trip to..." value={newCollection.description} onChange={(e) => setNewCollection((prev) => ({ ...prev, description: e.target.value }))} className="mt-1" rows={3} />
+                <Label htmlFor="description">{t("collections.descriptionOptional")}</Label>
+                <Textarea id="description" placeholder={t("collections.descriptionPlaceholder")} value={newCollection.description} onChange={(e) => setNewCollection((prev) => ({ ...prev, description: e.target.value }))} className="mt-1" rows={3} />
               </div>
               <Button onClick={createCollection} disabled={creating || !newCollection.name.trim()} className="w-full bg-gradient-primary hover:opacity-90">
-                {creating ? "Creating..." : "Create Collection"}
+                {creating ? t("collections.creating") : t("collections.createCollection")}
               </Button>
             </div>
           </DialogContent>
@@ -197,8 +199,8 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
         <Card className="border-2 border-dashed">
           <CardContent className="p-8 text-center">
             <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No collections yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first photo collection to get started</p>
+            <h3 className="text-lg font-semibold mb-2">{t("collections.noCollections")}</h3>
+            <p className="text-muted-foreground mb-4">{t("collections.createFirstCollection")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -209,13 +211,15 @@ export function CollectionManager({ selectedCollectionId, onSelectCollection }: 
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{collection.name}</CardTitle>
                   <Badge variant="secondary" className="text-xs">
-                    {collection.photo_count || 0} photos
+                    {collection.photo_count || 0} {t(collection.photo_count === 1 ? "photos.photo" : "photos.photos")}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 {collection.description && <p className="text-sm text-muted-foreground mb-2">{collection.description}</p>}
-                <p className="text-xs text-muted-foreground">Created {new Date(collection.created_at).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("collections.created")} {new Date(collection.created_at).toLocaleDateString()}
+                </p>
               </CardContent>
             </Card>
           ))}
