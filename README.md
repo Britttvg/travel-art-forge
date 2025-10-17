@@ -1,26 +1,10 @@
-# Welcome to your Lovable project
+# Travel Art Forge (Work in Progress)
 
 ## Project info
+An application to create AI art from your travel photos. The goal of this project is to experiment with Lovable.dev, AI models, Ollama and Supabase. Because of hardware restrictions, Ollama's tinyllama model is used for the AI art (not so good).
+**URL**: https://travel-art.vercel.app/
 
-**URL**: https://lovable.dev/projects/60d6bdc9-ea57-4442-a471-6cad90e92ce6
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/60d6bdc9-ea57-4442-a471-6cad90e92ce6) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Setup
 
 ```sh
 # Install Node.js dependencies
@@ -59,21 +43,9 @@ ollama pull tinyllama
 ## What technologies are used for this project?
 
 This project is built with:
-
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/60d6bdc9-ea57-4442-a471-6cad90e92ce6) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Vercel
