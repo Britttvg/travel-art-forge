@@ -13,6 +13,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🚀 FUNCTION STARTED - Enhanced version with validation');
+    console.log('📅 Timestamp:', new Date().toISOString());
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -24,6 +27,36 @@ serve(async (req) => {
     );
 
     const { prompt, title, photoUrls, artStyle, userId, collectionId } = await req.json();
+
+    console.log('📝 REQUEST DATA RECEIVED:');
+    console.log('  - Photo URLs count:', photoUrls?.length || 0);
+    console.log('  - Art Style:', artStyle);
+    console.log('  - User ID:', userId);
+    console.log('  - Collection ID:', collectionId);
+    console.log('  - Prompt:', prompt);
+
+    // TEMPORARY: Return debug info to see if function is working
+    if (photoUrls && photoUrls.length > 0) {
+      console.log('✅ Function is working! Photo URLs received successfully');
+      console.log('🔍 First photo URL:', photoUrls[0]);
+
+      return new Response(
+        JSON.stringify({
+          debug: 'Function is working correctly',
+          receivedData: {
+            photoCount: photoUrls.length,
+            artStyle,
+            userId,
+            hasPrompt: !!prompt
+          },
+          message: 'This is a debug response to test function execution',
+          timestamp: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     if (!photoUrls || photoUrls.length < 2 || !userId || !collectionId) {
       throw new Error('At least 2 photo URLs, userId, and collectionId are required');
@@ -51,42 +84,290 @@ serve(async (req) => {
     };
 
     const styleDesc = styleDescriptions[artStyle] || styleDescriptions.impressionist;
-    const fullPrompt = `Please analyze the ${photoUrls.length} travel photos I've provided above and create a beautiful ${styleDesc} that artistically combines and blends ALL visual elements from these photos into a single cohesive artwork.
 
-CRITICAL REQUIREMENTS:
-- USE ONLY the visual content from the provided photos - landscapes, buildings, objects, scenery, and any people shown
-- If any people appear in the photos, you MUST preserve them EXACTLY as they appear in the original photos
-- DO NOT add any people, objects, or elements that are not visible in the original photos
-- DO NOT alter, modify, or change body shapes, facial features, or physical appearance of any people
-- Keep all people recognizable and true to their original appearance with accurate proportions and features
-- Incorporate the actual colors, lighting, and compositional elements from the source photos
-- Blend the scenes, architecture, landscapes, and other visual elements from all photos harmoniously
-
-ARTISTIC GOAL: ${prompt || 'Make it visually stunning and harmonious while staying true to the original photo content.'}`;
-
-    // Call Lovable AI Gateway to generate image
+    // Call Lovable AI Gateway to analyze and generate artwork
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Prepare the message content with both images and text
-    const messageContent = [
-      // Add all the source photos first
-      ...photoUrls.map((url: string) => ({
-        type: 'image_url',
-        image_url: {
-          url: url,
-          detail: 'high'
-        }
-      })),
-      // Then add the text prompt
-      {
-        type: 'text',
-        text: fullPrompt
-      }
-    ];
+    // Enhanced image preprocessing with validation and content verification
+    console.log('Fetching and preprocessing photos with validation...');
+    const base64Images = [];
+    const imageValidationResults = [];
 
+    for (let i = 0; i < photoUrls.length; i++) {
+      const photoUrl = photoUrls[i];
+      try {
+        console.log(`Processing photo ${i + 1}/${photoUrls.length}:`, photoUrl);
+
+        // Fetch the image
+        const response = await fetch(photoUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; TravelArtForge/1.0)',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch photo: ${response.status} ${response.statusText}`);
+        }
+
+        // Get image metadata
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        const contentLength = response.headers.get('content-length');
+        console.log(`Photo ${i + 1} - Type: ${contentType}, Size: ${contentLength} bytes`);
+
+        // Validate image format
+        if (!contentType.startsWith('image/')) {
+          throw new Error(`Invalid content type: ${contentType}. Expected image format.`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const imageSize = arrayBuffer.byteLength;
+
+        // Validate image size
+        if (imageSize < 1000) {
+          throw new Error(`Image too small: ${imageSize} bytes. Might be corrupted.`);
+        }
+
+        if (imageSize > 10 * 1024 * 1024) { // 10MB limit
+          console.warn(`Large image: ${Math.round(imageSize / (1024 * 1024))}MB. This might cause processing issues.`);
+        }
+
+        // Convert to base64 with proper encoding
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+        const dataUrl = `data:${contentType};base64,${base64}`;
+
+        // Validate base64 conversion
+        if (!base64 || base64.length < 100) {
+          throw new Error('Base64 conversion failed or resulted in unusually small data');
+        }
+
+        // Test image readability with a quick AI validation
+        console.log(`Validating photo ${i + 1} content with AI...`);
+        const validationResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-image',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'image_url',
+                    image_url: {
+                      url: dataUrl,
+                      detail: 'low'
+                    }
+                  },
+                  {
+                    type: 'text',
+                    text: 'Describe this image in one sentence. What do you see?'
+                  }
+                ]
+              }
+            ]
+          })
+        });
+
+        let validationResult = 'No validation available';
+        if (validationResponse.ok) {
+          const validationData = await validationResponse.json();
+          validationResult = validationData.choices?.[0]?.message?.content || 'AI could not describe image';
+        }
+
+        imageValidationResults.push({
+          index: i + 1,
+          url: photoUrl,
+          size: imageSize,
+          contentType: contentType,
+          base64Size: Math.round(base64.length / 1024),
+          aiDescription: validationResult
+        });
+
+        base64Images.push({
+          type: 'image_url',
+          image_url: {
+            url: dataUrl,
+            detail: 'high'
+          }
+        });
+
+        console.log(`✓ Photo ${i + 1} processed successfully:`);
+        console.log(`  - Size: ${Math.round(imageSize / 1024)}KB`);
+        console.log(`  - Base64: ${Math.round(base64.length / 1024)}KB`);
+        console.log(`  - AI sees: ${validationResult.substring(0, 100)}...`);
+
+      } catch (error) {
+        console.error(`✗ Error processing photo ${i + 1}:`, photoUrl, error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Failed to process photo ${i + 1} (${photoUrl}). Error: ${errorMessage}`);
+      }
+    }
+
+    // Log comprehensive validation summary
+    console.log('\n=== IMAGE VALIDATION SUMMARY ===');
+    for (const result of imageValidationResults) {
+      console.log(`Photo ${result.index}:`);
+      console.log(`  URL: ${result.url.substring(0, 60)}...`);
+      console.log(`  Size: ${Math.round(result.size / 1024)}KB (${result.contentType})`);
+      console.log(`  AI Description: ${result.aiDescription}`);
+      console.log('---');
+    }
+    console.log('===============================\n');
+
+    console.log(`Prepared ${base64Images.length} images for AI analysis`);
+
+    // Final verification: Test if AI can process all images together
+    console.log('Performing final batch processing test...');
+    const batchTestResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `How many images do you see? List them briefly (one sentence each).`
+              },
+              ...base64Images
+            ]
+          }
+        ]
+      })
+    });
+
+    if (batchTestResponse.ok) {
+      const batchTestData = await batchTestResponse.json();
+      const batchTestResult = batchTestData.choices?.[0]?.message?.content;
+      console.log('Batch processing test result:', batchTestResult);
+    } else {
+      console.warn('Batch processing test failed - AI may have trouble with multiple images');
+    }
+
+    // Enhanced photo analysis with detailed validation
+    console.log('Performing comprehensive photo analysis with Gemini...');
+    const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `I'm providing ${photoUrls.length} travel photos. Please analyze each photo separately and provide a comprehensive inventory:
+
+FOR EACH PHOTO (please number them Photo 1, Photo 2, etc.):
+
+PEOPLE ANALYSIS:
+- Count of people in the photo
+- Each person's appearance (age, gender, ethnicity if identifiable)
+- Clothing description (colors, style, specific items)
+- Poses and positioning
+- Facial expressions and features
+
+ENVIRONMENT ANALYSIS:
+- Setting type (urban, natural, indoor, etc.)
+- Architecture (buildings, monuments, structures with specific details)
+- Natural features (landscapes, water bodies, vegetation, sky conditions)
+- Weather and lighting conditions
+- Time of day indicators
+
+OBJECTS & DETAILS:
+- Vehicles, signs, furniture, decorations
+- Colors (dominant color palette)
+- Textures and materials visible
+- Cultural or regional indicators
+- Any unique or distinctive elements
+
+COMPOSITION:
+- Foreground, middle ground, background elements
+- Perspective and viewpoint
+- Overall mood and atmosphere
+
+Please be extremely detailed and specific. This analysis will be used to create a ${styleDesc} artwork that must include ALL these elements authentically.`
+              },
+              ...base64Images
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!analysisResponse.ok) {
+      const errorText = await analysisResponse.text();
+      console.error('Photo analysis error:', errorText);
+      throw new Error(`Photo analysis error: ${errorText}`);
+    }
+
+    const analysisData = await analysisResponse.json();
+    const photoAnalysis = analysisData.choices?.[0]?.message?.content;
+
+    if (!photoAnalysis) {
+      console.error('No analysis content returned. Full response:', JSON.stringify(analysisData, null, 2));
+      throw new Error('Failed to analyze photos - no analysis returned from Gemini');
+    }
+
+    // Validate analysis quality
+    const analysisLength = photoAnalysis.length;
+    const photoMentions = (photoAnalysis.match(/photo \d+/gi) || []).length;
+    const peopleMentions = (photoAnalysis.match(/people?|person|man|woman|child/gi) || []).length;
+    const buildingMentions = (photoAnalysis.match(/building|architecture|structure|monument/gi) || []).length;
+
+    console.log('\n=== ANALYSIS QUALITY CHECK ===');
+    console.log(`Analysis length: ${analysisLength} characters`);
+    console.log(`Photo references: ${photoMentions}`);
+    console.log(`People mentions: ${peopleMentions}`);
+    console.log(`Building mentions: ${buildingMentions}`);
+
+    if (analysisLength < 200) {
+      console.warn('⚠️  Analysis seems very short. May not be detailed enough.');
+    }
+
+    if (photoMentions < photoUrls.length) {
+      console.warn(`⚠️  Expected ${photoUrls.length} photo references, found ${photoMentions}`);
+    }
+
+    console.log('\n=== FULL PHOTO ANALYSIS ===');
+    console.log(photoAnalysis);
+    console.log('==========================\n');
+
+    // Create a more specific prompt for image generation
+    const artworkPrompt = `Based on the following detailed analysis of travel photos, create a ${styleDesc} that incorporates ALL the specific visual elements mentioned:
+
+PHOTO CONTENT ANALYSIS:
+${photoAnalysis}
+
+STYLE: ${styleDesc}
+USER REQUIREMENTS: ${prompt || 'Create a harmonious and visually stunning composition'}
+
+MANDATORY CONSTRAINTS:
+- Include every person mentioned in the analysis with their exact appearance, clothing, and poses
+- Include every building, landmark, and architectural element described  
+- Include all landscapes, natural features, and backgrounds mentioned
+- Use the exact colors, lighting, and atmospheric conditions described
+- Do not add any people, buildings, objects, or elements not mentioned in the analysis
+- Maintain the authentic character and recognizable features of all described elements
+- Blend everything into a cohesive ${styleDesc} composition`;
+
+    // Try using a different model or approach
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -98,7 +379,19 @@ ARTISTIC GOAL: ${prompt || 'Make it visually stunning and harmonious while stayi
         messages: [
           {
             role: 'user',
-            content: messageContent
+            content: [
+              {
+                type: 'text',
+                text: `Here are the original photos I want you to reference:`
+              },
+              ...base64Images,
+              {
+                type: 'text',
+                text: artworkPrompt + `
+
+Please generate a ${styleDesc} image that incorporates the specific visual elements from the photos I provided above. The image should combine all the people, buildings, landscapes, and other elements visible in the source photos into a cohesive artistic composition.`
+              }
+            ]
           }
         ],
         modalities: ['image', 'text']
@@ -112,18 +405,91 @@ ARTISTIC GOAL: ${prompt || 'Make it visually stunning and harmonious while stayi
     }
 
     const aiData = await aiResponse.json();
-    console.log('AI Response structure:', JSON.stringify(aiData, null, 2));
-    const generatedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    console.log('AI Response received, checking for generated image...');
 
-    if (!generatedImageUrl) {
-      throw new Error('No image generated by AI');
+    // Try multiple possible response formats
+    let generatedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url ||
+      aiData.choices?.[0]?.message?.images?.[0]?.url ||
+      aiData.data?.[0]?.url;
+
+    if (generatedImageUrl) {
+      console.log('Successfully received generated image from AI');
+    } else {
+      console.error('No image in AI response. Full response:', JSON.stringify(aiData, null, 2));
+
+      // Try alternative approach - look for base64 content
+      const messageContent = aiData.choices?.[0]?.message?.content;
+      if (typeof messageContent === 'string' && messageContent.includes('data:image')) {
+        const base64Match = messageContent.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+        if (base64Match) {
+          generatedImageUrl = base64Match[0];
+          console.log('Found base64 image in message content');
+        }
+      }
+
+      if (!generatedImageUrl) {
+        console.log('Primary generation method failed, trying fallback approach...');
+
+        // Fallback: Try a simpler direct generation with image references
+        const fallbackResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-image',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  ...base64Images,
+                  {
+                    type: 'text',
+                    text: `Please create a ${styleDesc} artwork that directly incorporates and blends the visual elements from all the photos I've provided above. Include all people exactly as they appear, all buildings and landmarks, all landscapes and backgrounds. Combine them into a cohesive ${styleDesc} composition. ${prompt || ''}`
+                  }
+                ]
+              }
+            ],
+            modalities: ['image', 'text']
+          })
+        });
+
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          generatedImageUrl = fallbackData.choices?.[0]?.message?.images?.[0]?.image_url?.url ||
+            fallbackData.choices?.[0]?.message?.images?.[0]?.url;
+
+          if (generatedImageUrl) {
+            console.log('Fallback generation succeeded');
+          }
+        }
+
+        if (!generatedImageUrl) {
+          throw new Error('Both primary and fallback image generation methods failed - check the logs above for details');
+        }
+      }
     }
 
     console.log('Generated artwork image');
 
-    // Upload the generated image to Supabase storage
-    const base64Data = generatedImageUrl.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Uint8Array.from(atob(base64Data), c => c.codePointAt(0) || 0);
+    // Download and upload the generated image to Supabase storage
+    let buffer: Uint8Array;
+
+    if (generatedImageUrl.startsWith('data:')) {
+      // Handle base64 data URL
+      const base64Data = generatedImageUrl.replace(/^data:image\/\w+;base64,/, '');
+      buffer = Uint8Array.from(atob(base64Data), c => c.codePointAt(0) || 0);
+    } else {
+      // Handle regular URL - fetch the image
+      console.log('Downloading generated image from:', generatedImageUrl);
+      const imageResponse = await fetch(generatedImageUrl);
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to download generated image: ${imageResponse.status}`);
+      }
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      buffer = new Uint8Array(arrayBuffer);
+    }
 
     const fileName = `artwork-${Date.now()}.png`;
     const { error: uploadError } = await supabaseClient.storage
@@ -154,8 +520,21 @@ ARTISTIC GOAL: ${prompt || 'Make it visually stunning and harmonious while stayi
         collection_id: collectionId,
         artwork_url: artworkUrl,
         title: title,
-        style_settings: { prompt, artStyle, photoCount: photoUrls.length },
-        prompt_used: null // Do not store the prompt text
+        style_settings: {
+          prompt,
+          artStyle,
+          photoCount: photoUrls.length,
+          validationSummary: {
+            imageValidation: imageValidationResults,
+            analysisStats: {
+              length: analysisLength,
+              photoMentions,
+              peopleMentions,
+              buildingMentions
+            }
+          }
+        },
+        prompt_used: photoAnalysis // Store the photo analysis for debugging
       })
       .select()
       .single();
