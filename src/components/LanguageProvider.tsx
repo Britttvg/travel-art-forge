@@ -145,7 +145,7 @@ const translations = {
     "generate.failed": "Genereren mislukt",
     "generate.failedDesc": "Kunstwerk genereren mislukt. Probeer het opnieuw.",
     "generate.missingInfo": "Ontbrekende informatie",
-    "generate.missingInfoDesc": "Selecteer minimaal 2 foto's en voer een prompt in",
+    "generate.missingInfoDesc": "Selecteer minimaal 2 foto's",
 
     // Artwork
     "artwork.generate": "Genereer Kunst",
@@ -162,7 +162,7 @@ const translations = {
     "artwork.errors.generationFailed": "Genereren mislukt",
     "artwork.errors.tryAgain": "Kunstwerk genereren mislukt. Probeer het opnieuw.",
     "artwork.errors.missingInfo": "Ontbrekende informatie",
-    "artwork.errors.selectPhotosPrompt": "Selecteer minimaal 2 foto's en voer een prompt in",
+    "artwork.errors.selectPhotosPrompt": "Selecteer minimaal 2 foto's",
     "artwork.styles.impressionist": "Impressionistisch Schilderij",
     "artwork.styles.watercolor": "Aquarel",
     "artwork.styles.oilPainting": "Olieverf Schilderij",

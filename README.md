@@ -1,7 +1,7 @@
 # Travel Art Forge (Work in Progress)
 
 ## Project info
-An application to create AI art from your travel photos. The goal of this project is to experiment with Lovable.dev, AI models, Ollama and Supabase. Because of hardware restrictions, Ollama's tinyllama model is used for the AI art (not so good).
+An application to create AI art from your travel photos. The goal of this project is to experiment with Lovable.dev, AI models, Ollama (replaced with Gemini) and Supabase. Because of hardware restrictions, free cloud models are used for the AI art. This might result in request limitations or bad results.
 **URL**: https://travel-art.vercel.app/
 
 ## Setup
@@ -33,6 +33,7 @@ npx supabase start
 npx supabase login
 ```
 
+If using local Ollama (not used right now)
 ```sh
 ollama serve
 

@@ -120,7 +120,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
   };
 
   const generateArtwork = async () => {
-    if (selectedPhotos.size < 2 || !prompt.trim() || !artworkTitle.trim()) {
+    if (selectedPhotos.size < 2 || !artworkTitle.trim()) {
       toast({
         title: t("artwork.errors.missingInfo"),
         description: t("artwork.errors.selectPhotosPrompt"),
@@ -320,7 +320,7 @@ export function PhotoGallery({ collectionId, refreshTrigger, onArtworkGenerated 
                 <Label htmlFor="prompt">{t("artwork.additionalDetails")}</Label>
                 <Textarea id="prompt" placeholder={t("artwork.promptPlaceholder")} value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3} className="mt-1" />
               </div>
-              <Button onClick={generateArtwork} disabled={generating || selectedPhotos.size < 2 || !prompt.trim() || !artworkTitle.trim()} className="w-full bg-gradient-primary hover:opacity-90">
+              <Button onClick={generateArtwork} disabled={generating || selectedPhotos.size < 2 || !artworkTitle.trim()} className="w-full bg-gradient-primary hover:opacity-90">
                 <Sparkles className="mr-2 h-4 w-4" />
                 {generating ? t("artwork.generating") : t("artwork.generate")}
               </Button>

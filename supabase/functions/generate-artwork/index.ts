@@ -30,6 +30,14 @@ serve(async (req) => {
     }
 
     console.log('Generating artwork from', photoUrls.length, 'photos with style:', artStyle);
+    console.log('Photo URLs:', photoUrls);
+
+    // Validate that photo URLs are accessible
+    for (const photoUrl of photoUrls) {
+      if (!photoUrl || typeof photoUrl !== 'string') {
+        throw new Error(`Invalid photo URL: ${photoUrl}`);
+      }
+    }
 
     // Build the AI prompt based on style and user input
     const styleDescriptions: Record<string, string> = {
@@ -43,22 +51,41 @@ serve(async (req) => {
     };
 
     const styleDesc = styleDescriptions[artStyle] || styleDescriptions.impressionist;
-    const fullPrompt = `Create a beautiful ${styleDesc} that artistically combines and blends these ${photoUrls.length} travel photos into a single cohesive artwork. 
-    
-CRITICAL REQUIREMENTS:
-- If any people appear in the photos, you MUST preserve them EXACTLY as they appear
-- DO NOT include people that are not in the original photos
-- DO NOT alter, modify, or change body shapes, facial features, or physical appearance of any people
-- Keep all people recognizable and true to their original appearance
-- Maintain accurate proportions and features for all human subjects.
+    const fullPrompt = `Please analyze the ${photoUrls.length} travel photos I've provided above and create a beautiful ${styleDesc} that artistically combines and blends ALL visual elements from these photos into a single cohesive artwork.
 
-${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
+CRITICAL REQUIREMENTS:
+- USE ONLY the visual content from the provided photos - landscapes, buildings, objects, scenery, and any people shown
+- If any people appear in the photos, you MUST preserve them EXACTLY as they appear in the original photos
+- DO NOT add any people, objects, or elements that are not visible in the original photos
+- DO NOT alter, modify, or change body shapes, facial features, or physical appearance of any people
+- Keep all people recognizable and true to their original appearance with accurate proportions and features
+- Incorporate the actual colors, lighting, and compositional elements from the source photos
+- Blend the scenes, architecture, landscapes, and other visual elements from all photos harmoniously
+
+ARTISTIC GOAL: ${prompt || 'Make it visually stunning and harmonious while staying true to the original photo content.'}`;
 
     // Call Lovable AI Gateway to generate image
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
+
+    // Prepare the message content with both images and text
+    const messageContent = [
+      // Add all the source photos first
+      ...photoUrls.map((url: string) => ({
+        type: 'image_url',
+        image_url: {
+          url: url,
+          detail: 'high'
+        }
+      })),
+      // Then add the text prompt
+      {
+        type: 'text',
+        text: fullPrompt
+      }
+    ];
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -71,7 +98,7 @@ ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
         messages: [
           {
             role: 'user',
-            content: fullPrompt
+            content: messageContent
           }
         ],
         modalities: ['image', 'text']
@@ -85,6 +112,7 @@ ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
     }
 
     const aiData = await aiResponse.json();
+    console.log('AI Response structure:', JSON.stringify(aiData, null, 2));
     const generatedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!generatedImageUrl) {
@@ -95,10 +123,10 @@ ${prompt ? prompt : 'Make it visually stunning and harmonious.'}`;
 
     // Upload the generated image to Supabase storage
     const base64Data = generatedImageUrl.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    const buffer = Uint8Array.from(atob(base64Data), c => c.codePointAt(0) || 0);
 
     const fileName = `artwork-${Date.now()}.png`;
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+    const { error: uploadError } = await supabaseClient.storage
       .from('generated-artworks')
       .upload(fileName, buffer, {
         contentType: 'image/png',
