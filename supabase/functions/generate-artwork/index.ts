@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const currentModel = 'google/gemini-2.5-flash-image-preview';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -35,32 +37,11 @@ serve(async (req) => {
     console.log('  - Collection ID:', collectionId);
     console.log('  - Prompt:', prompt);
 
-    // TEMPORARY: Return debug info to see if function is working
-    if (photoUrls && photoUrls.length > 0) {
-      console.log('✅ Function is working! Photo URLs received successfully');
-      console.log('🔍 First photo URL:', photoUrls[0]);
-
-      return new Response(
-        JSON.stringify({
-          debug: 'Function is working correctly',
-          receivedData: {
-            photoCount: photoUrls.length,
-            artStyle,
-            userId,
-            hasPrompt: !!prompt
-          },
-          message: 'This is a debug response to test function execution',
-          timestamp: new Date().toISOString()
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
     if (!photoUrls || photoUrls.length < 2 || !userId || !collectionId) {
       throw new Error('At least 2 photo URLs, userId, and collectionId are required');
     }
+
+    console.log('🔍 First photo URL:', photoUrls[0]);
 
     console.log('Generating artwork from', photoUrls.length, 'photos with style:', artStyle);
     console.log('Photo URLs:', photoUrls);
@@ -125,23 +106,43 @@ serve(async (req) => {
         const arrayBuffer = await response.arrayBuffer();
         const imageSize = arrayBuffer.byteLength;
 
-        // Validate image size
+        // Validate image size and warn about large images
         if (imageSize < 1000) {
           throw new Error(`Image too small: ${imageSize} bytes. Might be corrupted.`);
         }
 
-        if (imageSize > 10 * 1024 * 1024) { // 10MB limit
-          console.warn(`Large image: ${Math.round(imageSize / (1024 * 1024))}MB. This might cause processing issues.`);
+        if (imageSize > 5 * 1024 * 1024) { // 5MB limit for safety
+          throw new Error(`Image too large: ${Math.round(imageSize / (1024 * 1024))}MB. Please use images smaller than 5MB to avoid processing issues.`);
         }
 
-        // Convert to base64 with proper encoding
-        const uint8Array = new Uint8Array(arrayBuffer);
-        const base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
-        const dataUrl = `data:${contentType};base64,${base64}`;
+        if (imageSize > 2 * 1024 * 1024) { // 2MB warning
+          console.warn(`Large image detected: ${Math.round(imageSize / (1024 * 1024))}MB. This might cause processing delays.`);
+        }
 
-        // Validate base64 conversion
-        if (!base64 || base64.length < 100) {
-          throw new Error('Base64 conversion failed or resulted in unusually small data');
+        // Convert to base64 using proper method to avoid corruption
+        let base64: string;
+        let dataUrl: string;
+
+        try {
+          // Use a more reliable base64 conversion method
+          let binary = '';
+          const bytes = new Uint8Array(arrayBuffer);
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i++) {
+            binary += String.fromCodePoint(bytes[i]);
+          }
+          base64 = btoa(binary);
+
+          if (!base64 || base64.length < 100) {
+            throw new Error('Base64 conversion resulted in invalid data');
+          }
+
+          dataUrl = `data:${contentType};base64,${base64}`;
+          console.log(`✓ Base64 conversion successful: ${Math.round(base64.length / 1024)}KB`);
+
+        } catch (error) {
+          console.error(`Base64 conversion failed for photo ${i + 1}:`, error);
+          throw new Error(`Failed to convert image to base64. Image might be corrupted or in an unsupported format.`);
         }
 
         // Test image readability with a quick AI validation
@@ -153,7 +154,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-image',
+            model: currentModel,
             messages: [
               {
                 role: 'user',
@@ -232,7 +233,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
+        model: currentModel,
         messages: [
           {
             role: 'user',
@@ -265,7 +266,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
+        model: currentModel,
         messages: [
           {
             role: 'user',
@@ -375,7 +376,7 @@ MANDATORY CONSTRAINTS:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
+        model: currentModel,
         messages: [
           {
             role: 'user',
@@ -438,7 +439,7 @@ Please generate a ${styleDesc} image that incorporates the specific visual eleme
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-image',
+            model: currentModel,
             messages: [
               {
                 role: 'user',

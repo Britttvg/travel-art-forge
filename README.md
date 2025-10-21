@@ -29,8 +29,13 @@ uvicorn main:app --reload --port 8000
 ```
 
 ```sh
+# Local functions testing with Docker:
 npx supabase start
 npx supabase login
+npx supabase functions serve
+
+# Deploy to SB cloud (bijv. 'generate-artwork' function):
+npx supabase functions deploy generate-artwork
 ```
 
 If using local Ollama (not used right now)
