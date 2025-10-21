@@ -198,7 +198,6 @@ const translations = {
     "style.anime": "Anime Stijl",
 
     // Artwork Gallery
-    "artworks.title": "Gegenereerde Kunstwerken",
     "artworks.none": "Nog geen kunstwerken gegenereerd",
     "artworks.noneDesc": "Genereer kunstwerken van je foto's om ze hier te zien",
     "artworks.artwork": "kunstwerk",
@@ -432,7 +431,6 @@ const translations = {
     "style.anime": "Anime Style",
 
     // Artwork Gallery
-    "artworks.title": "Generated Artworks",
     "artworks.none": "No artworks generated yet",
     "artworks.noneDesc": "Generate some artwork descriptions from your photos to see them here",
     "artworks.artwork": "artwork",

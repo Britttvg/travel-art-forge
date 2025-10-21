@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Palette, Copy, Check, Trash2 } from "lucide-react";
+import { Palette, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
@@ -29,6 +30,7 @@ export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<Artwor
   const [artworks, setArtworks] = useState<GeneratedArtwork[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedArtwork, setSelectedArtwork] = useState<GeneratedArtwork | null>(null);
   const { toast } = useToast();
   const [deleting, setDeleting] = useState(false);
   const { t } = useLanguage();
@@ -146,53 +148,77 @@ export function ArtworkGallery({ refreshTrigger, collectionId }: Readonly<Artwor
         </Badge>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {artworks.map((artwork) => (
           <Card key={artwork.id} className="shadow-soft hover:shadow-elegant transition-all duration-300">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{artwork.title || t("artwork.aiGeneratedTitle")}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <ConfirmDeleteDialog
-                    trigger={
-                      <Button size="sm" variant="outline" className="h-8 w-8 p-0" aria-label="Delete">
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    }
-                    title={t("artwork.deleteConfirmTitle")}
-                    description={`${t("artwork.deleteConfirmDescription")} ${t("common.undoWarning")}`}
-                    onConfirm={() => handleDelete(artwork.id)}
-                    isDeleting={deleting}
-                  />
-                </div>
+                <CardTitle className="text-sm font-medium truncate">{artwork.title || t("artwork.aiGeneratedTitle")}</CardTitle>
+                <ConfirmDeleteDialog
+                  trigger={
+                    <Button size="sm" variant="outline" className="h-7 w-7 p-0 flex-shrink-0" aria-label="Delete">
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  }
+                  title={t("artwork.deleteConfirmTitle")}
+                  description={`${t("artwork.deleteConfirmDescription")} ${t("common.undoWarning")}`}
+                  onConfirm={() => handleDelete(artwork.id)}
+                  isDeleting={deleting}
+                />
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 pt-0">
               <div>
-                <div className="rounded-lg overflow-hidden border shadow-md mb-2">
+                <button className="rounded-lg overflow-hidden border shadow-md mb-2 aspect-square cursor-pointer hover:opacity-80 transition-opacity w-full p-0 bg-transparent" onClick={() => setSelectedArtwork(artwork)} aria-label={`Enlarge artwork: ${artwork.title || t("artwork.aiGeneratedTitle")}`}>
                   <img
                     src={artwork.artwork_url}
                     alt="Generated AI artwork"
-                    className="w-full h-auto"
+                    className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = "/placeholder.svg";
                       target.alt = "Image not available";
                     }}
                   />
-                </div>
-                <p className="text-xs text-muted-foreground break-all">{artwork.artwork_url}</p>
+                </button>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                <span>
-                  {t("artwork.createdOn")} {new Date(artwork.created_at).toLocaleString()}
-                </span>
+              <div className="text-xs text-muted-foreground pt-2 border-t">
+                <div className="truncate mb-1">
+                  {t("artwork.createdOn")} {new Date(artwork.created_at).toLocaleDateString()}
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Enlarged artwork modal */}
+      <Dialog open={!!selectedArtwork} onOpenChange={() => setSelectedArtwork(null)}>
+        <DialogContent className="max-w-4xl max-h-[95vh] p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Enlarged Artwork</DialogTitle>
+          </DialogHeader>
+          {selectedArtwork && (
+            <div className="relative">
+              <h3 className="my-3 text-center text-lg font-medium">{selectedArtwork.title || t("artwork.aiGeneratedTitle")}</h3>
+              <img
+                src={selectedArtwork.artwork_url}
+                alt="Generated AI artwork - enlarged view"
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.svg";
+                  target.alt = "Image not available";
+                }}
+              />
+              <p className="my-4 text-center text-sm text-muted-foreground">
+                {t("artwork.createdOn")} {new Date(selectedArtwork.created_at).toLocaleString()}
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
