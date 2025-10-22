@@ -64,6 +64,79 @@ serve(async (req) => {
       anime: 'anime art style with expressive features and dramatic composition'
     };
 
+    // Enhanced style-specific instructions for deeper artistic interpretation
+    const detailedStyleInstructions: Record<string, string> = {
+      impressionist: `IMPRESSIONIST STYLE REQUIREMENTS:
+- Apply broken color technique with visible, textured brushstrokes
+- Use warm and cool color contrasts to create luminous effects
+- Implement plein air lighting with emphasis on natural light changes
+- Create atmospheric perspective with softer edges in background
+- Apply impasto technique for texture in key areas
+- Use complementary colors placed side by side to create vibrancy
+- Capture fleeting moments with loose, spontaneous brushwork
+- Emphasize the play of light and shadow throughout the composition`,
+
+      watercolor: `WATERCOLOR STYLE REQUIREMENTS:
+- Apply transparent washes with visible paper texture showing through
+- Use wet-on-wet techniques for soft, bleeding color effects
+- Implement granulation and bloom effects characteristic of watercolor
+- Create luminous whites by preserving paper areas
+- Apply layered glazes for depth and color mixing
+- Use controlled dripping and flowing effects
+- Implement soft, feathered edges and gradual color transitions
+- Apply salt texture effects and lifting techniques for natural variations`,
+
+      'oil-painting': `OIL PAINTING STYLE REQUIREMENTS:
+- Apply thick impasto brushwork with palette knife textures
+- Use alla prima wet-on-wet blending techniques
+- Implement chiaroscuro lighting with dramatic light/shadow contrasts
+- Apply glazing techniques for deep, rich color depth
+- Use scumbling for textural effects and atmospheric haze
+- Create smooth color transitions through careful blending
+- Apply broken color technique for vibrant surface effects
+- Emphasize the physical presence of paint on canvas`,
+
+      'digital-art': `DIGITAL ART STYLE REQUIREMENTS:
+- Use clean, precise vector-like lines and shapes
+- Apply gradient meshes and smooth color transitions
+- Implement high contrast lighting with sharp shadows
+- Use vibrant, saturated color palettes beyond traditional media
+- Apply digital brush effects and custom textures
+- Create sharp focus throughout with minimal atmospheric perspective
+- Use geometric precision in composition and perspective
+- Implement glowing effects and digital lighting phenomena`,
+
+      abstract: `ABSTRACT STYLE REQUIREMENTS:
+- Deconstruct recognizable forms into geometric shapes and patterns
+- Use bold, contrasting color blocks and angular compositions
+- Apply non-representational color relationships and harmonies
+- Implement dynamic, asymmetrical balance in composition
+- Use overlapping planes and fragmented perspectives
+- Apply texture through pattern and repetition rather than naturalistic detail
+- Create visual rhythm through repeated elements and color echoes
+- Emphasize emotional expression over literal representation`,
+
+      photorealistic: `PHOTOREALISTIC STYLE REQUIREMENTS:
+- Render with precise detail and sharp focus throughout
+- Apply accurate perspective and proportional relationships
+- Use realistic lighting with proper cast shadows and reflections
+- Implement subtle color variations and realistic skin tones
+- Apply fine detail in textures, fabrics, and surface materials
+- Use accurate atmospheric perspective and depth of field
+- Create seamless blending without visible brushstrokes
+- Emphasize clarity, precision, and lifelike representation`,
+
+      anime: `ANIME STYLE REQUIREMENTS:
+- Apply cel-shading technique with clean, defined shadows
+- Use large, expressive eyes with detailed highlights and reflections
+- Implement dynamic poses with exaggerated proportions
+- Apply vibrant, saturated colors with high contrast
+- Use clean, precise line art with varied line weights
+- Create dramatic lighting effects and atmospheric backgrounds
+- Apply stylized hair with gravity-defying movement and shine
+- Emphasize emotional expression through facial features and body language`
+    };
+
     const styleDesc = styleDescriptions[artStyle] || styleDescriptions.impressionist;
 
     // Call Lovable AI Gateway to analyze and generate artwork
@@ -351,12 +424,15 @@ Please be extremely detailed and specific. This analysis will be used to create 
     console.log('==========================\n');
 
     // Create a more specific prompt for image generation
+    const detailedStyleInstruction = detailedStyleInstructions[artStyle] || detailedStyleInstructions.impressionist;
+
     const artworkPrompt = `Based on the following detailed analysis of travel photos, create a ${styleDesc} that incorporates ALL the specific visual elements mentioned:
 
 PHOTO CONTENT ANALYSIS:
 ${photoAnalysis}
 
-STYLE: ${styleDesc}
+${detailedStyleInstruction}
+
 USER REQUIREMENTS: ${prompt || 'Create a harmonious and visually stunning composition'}
 
 MANDATORY CONSTRAINTS:
@@ -366,7 +442,8 @@ MANDATORY CONSTRAINTS:
 - Use the exact colors, lighting, and atmospheric conditions described
 - Do not add any people, buildings, objects, or elements not mentioned in the analysis
 - Maintain the authentic character and recognizable features of all described elements
-- Blend everything into a cohesive ${styleDesc} composition`;
+- Blend everything into a cohesive ${styleDesc} composition
+- CRITICAL: Apply the style requirements listed above with precision and attention to the specific techniques mentioned`;
 
     // Try using a different model or approach
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -390,7 +467,9 @@ MANDATORY CONSTRAINTS:
                 type: 'text',
                 text: artworkPrompt + `
 
-Please generate a ${styleDesc} image that incorporates the specific visual elements from the photos I provided above. The image should combine all the people, buildings, landscapes, and other elements visible in the source photos into a cohesive artistic composition.`
+STYLE EMPHASIS: This is crucial - the artwork MUST demonstrate the specific artistic techniques and visual characteristics detailed in the style requirements above. The ${styleDesc} approach should be clearly evident in every aspect of the composition, from color application to texture rendering to lighting treatment.
+
+Please generate a ${styleDesc} image that incorporates the specific visual elements from the photos I provided above. The image should combine all the people, buildings, landscapes, and other elements visible in the source photos into a cohesive artistic composition that exemplifies the ${artStyle} style.`
               }
             ]
           }
@@ -447,7 +526,11 @@ Please generate a ${styleDesc} image that incorporates the specific visual eleme
                   ...base64Images,
                   {
                     type: 'text',
-                    text: `Please create a ${styleDesc} artwork that directly incorporates and blends the visual elements from all the photos I've provided above. Include all people exactly as they appear, all buildings and landmarks, all landscapes and backgrounds. Combine them into a cohesive ${styleDesc} composition. ${prompt || ''}`
+                    text: `Please create a ${styleDesc} artwork that directly incorporates and blends the visual elements from all the photos I've provided above. Include all people exactly as they appear, all buildings and landmarks, all landscapes and backgrounds. Combine them into a cohesive ${styleDesc} composition. 
+                    
+${detailedStyleInstruction}
+
+${prompt || ''}`
                   }
                 ]
               }
