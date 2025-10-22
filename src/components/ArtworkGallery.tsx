@@ -16,7 +16,7 @@ interface GeneratedArtwork {
   user_id: string;
   style_settings: unknown;
   prompt_used: string | null;
-  title: string | null;
+  title: string;
   created_at: string;
   is_favorite: boolean | null;
 }
