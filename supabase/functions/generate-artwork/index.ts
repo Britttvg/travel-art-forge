@@ -37,8 +37,8 @@ serve(async (req) => {
     console.log('  - Collection ID:', collectionId);
     console.log('  - Prompt:', prompt);
 
-    if (!photoUrls || photoUrls.length < 2 || !userId || !collectionId) {
-      throw new Error('At least 2 photo URLs, userId, and collectionId are required');
+    if (!photoUrls || photoUrls.length < 1 || !userId || !collectionId) {
+      throw new Error('At least 1 photo URL, userId, and collectionId are required');
     }
 
     console.log('🔍 First photo URL:', photoUrls[0]);
@@ -346,9 +346,9 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `I'm providing ${photoUrls.length} travel photos. Please analyze each photo separately and provide a comprehensive inventory:
+                text: `I'm providing ${photoUrls.length} travel photo${photoUrls.length === 1 ? '' : 's'}. Please analyze ${photoUrls.length === 1 ? 'the photo' : 'each photo separately'} and provide a comprehensive inventory:
 
-FOR EACH PHOTO (please number them Photo 1, Photo 2, etc.):
+FOR ${photoUrls.length === 1 ? 'THE PHOTO' : 'EACH PHOTO'} ${photoUrls.length > 1 ? '(please number them Photo 1, Photo 2, etc.)' : ''}:
 
 PEOPLE ANALYSIS:
 - Count of people in the photo
@@ -426,7 +426,7 @@ Please be extremely detailed and specific. This analysis will be used to create 
     // Create a more specific prompt for image generation
     const detailedStyleInstruction = detailedStyleInstructions[artStyle] || detailedStyleInstructions.impressionist;
 
-    const artworkPrompt = `Based on the following detailed analysis of travel photos, create a ${styleDesc} that incorporates ALL the specific visual elements mentioned:
+    const artworkPrompt = `Based on the following detailed analysis of travel photo${photoUrls.length === 1 ? '' : 's'}, create a ${styleDesc} that incorporates ALL the specific visual elements mentioned:
 
 PHOTO CONTENT ANALYSIS:
 ${photoAnalysis}
@@ -442,7 +442,7 @@ MANDATORY CONSTRAINTS:
 - Use the exact colors, lighting, and atmospheric conditions described
 - Do not add any people, buildings, objects, or elements not mentioned in the analysis
 - Maintain the authentic character and recognizable features of all described elements
-- Blend everything into a cohesive ${styleDesc} composition
+- ${photoUrls.length === 1 ? 'Transform the photo content into' : 'Blend everything into'} a cohesive ${styleDesc} composition
 - CRITICAL: Apply the style requirements listed above with precision and attention to the specific techniques mentioned`;
 
     // Try using a different model or approach
@@ -469,7 +469,7 @@ MANDATORY CONSTRAINTS:
 
 STYLE EMPHASIS: This is crucial - the artwork MUST demonstrate the specific artistic techniques and visual characteristics detailed in the style requirements above. The ${styleDesc} approach should be clearly evident in every aspect of the composition, from color application to texture rendering to lighting treatment.
 
-Please generate a ${styleDesc} image that incorporates the specific visual elements from the photos I provided above. The image should combine all the people, buildings, landscapes, and other elements visible in the source photos into a cohesive artistic composition that exemplifies the ${artStyle} style.`
+Please generate a ${styleDesc} image that incorporates the specific visual elements from the photo${photoUrls.length === 1 ? '' : 's'} I provided above. The image should ${photoUrls.length === 1 ? 'transform the photo content' : 'combine all the people, buildings, landscapes, and other elements visible in the source photos'} into a cohesive artistic composition that exemplifies the ${artStyle} style.`
               }
             ]
           }
@@ -526,7 +526,7 @@ Please generate a ${styleDesc} image that incorporates the specific visual eleme
                   ...base64Images,
                   {
                     type: 'text',
-                    text: `Please create a ${styleDesc} artwork that directly incorporates and blends the visual elements from all the photos I've provided above. Include all people exactly as they appear, all buildings and landmarks, all landscapes and backgrounds. Combine them into a cohesive ${styleDesc} composition. 
+                    text: `Please create a ${styleDesc} artwork that directly incorporates and blends the visual elements from ${photoUrls.length === 1 ? 'the photo' : 'all the photos'} I've provided above. Include all people exactly as they appear, all buildings and landmarks, all landscapes and backgrounds. ${photoUrls.length === 1 ? 'Transform the photo content' : 'Combine them'} into a cohesive ${styleDesc} composition. 
                     
 ${detailedStyleInstruction}
 
